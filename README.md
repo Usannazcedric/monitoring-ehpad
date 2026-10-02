@@ -16,6 +16,7 @@ Ce dépôt **continue** le projet de l'an dernier (Digi4), archivé tel quel sur
 | Architecture et écarts avec un produit fini (16 écarts cotés) | [`docs/etat-des-lieux.pdf`](docs/etat-des-lieux.pdf) · [version web](docs/etat-des-lieux.html) |
 | Contrat MQTT — correspondance Digi4 → Digi5 | [`docs/contrat_mqtt.md`](docs/contrat_mqtt.md) |
 | Module 1 — firmware ESP32 qui remplace le simulateur Python | [`firmware/m1_wokwi/`](firmware/m1_wokwi/) |
+| Simulation Wokwi de la carte | [wokwi.com/projects/476778339332099073](https://wokwi.com/projects/476778339332099073) |
 
 Le firmware ESP32 publie sur les **mêmes topics et les mêmes formats JSON** que le
 simulateur Python : le backend, le moteur d'alertes et le dashboard décrits ci-dessous
@@ -217,7 +218,9 @@ curl -X POST http://localhost:9100/scenario/R002 \
 │   └── m1_wokwi/         # Module 1 Digi5 : firmware ESP32 (remplace le simulateur)
 │       ├── diagram.json  # montage Wokwi : MPU-6050, bouton SOS, buzzer, potentiomètre
 │       ├── libraries.txt
-│       └── sketch.ino
+│       ├── sketch.ino
+│       ├── wokwi.toml    # simulation locale via l'extension Wokwi for VS Code
+│       └── build.sh      # compilation locale (arduino-cli), contourne la file Wokwi
 ├── docker-compose.yml
 ├── docs/
 │   ├── architecture.md   # Documentation technique détaillée

@@ -13,10 +13,10 @@ Le contrat complet (topics, formats, seuils, validation Pydantic) est dans
 
 ## Lien du projet Wokwi
 
-> **→ `COLLER ICI LE LIEN wokwi.com DU PROJET`**
+>  https://wokwi.com/projects/476778339332099073
 
-Dans Wokwi : **Save**, puis **Share** → copier l'URL publique.
-Le projet doit rester accessible sans compte.
+Le projet est également simulable en local, sans passer par les serveurs de
+wokwi.com : voir [plus bas](#si-wokwi-affiche--build-servers-busy-).
 
 ---
 
