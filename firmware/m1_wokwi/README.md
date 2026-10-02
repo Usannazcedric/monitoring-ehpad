@@ -25,7 +25,7 @@ Le projet doit rester accessible sans compte.
 | Fichier | Rôle |
 | --- | --- |
 | [`diagram.json`](diagram.json) | Le montage : ESP32 + MPU-6050 + bouton SOS + buzzer + potentiomètre |
-| [`libraries.txt`](libraries.txt) | Une seule dépendance : `PubSubClient` |
+| [`libraries.txt`](libraries.txt) | Une seule dépendance : `PubSubClient`, à ajouter via le Library Manager |
 | [`sketch.ino`](sketch.ino) | Le firmware |
 
 ---
@@ -49,7 +49,11 @@ jamais en 5 V.
 
 1. [wokwi.com](https://wokwi.com) → *New Project* → **ESP32**.
 2. Onglet `diagram.json` : remplacer tout le contenu par celui de [`diagram.json`](diagram.json).
-3. Onglet `libraries.txt` (le créer s'il n'existe pas) : coller [`libraries.txt`](libraries.txt).
+3. **Bibliothèque** : onglet **Library Manager** → bouton **+** → chercher `PubSubClient`
+   → *Add*. C'est la route fiable : Wokwi écrit lui-même `libraries.txt`.
+   Coller le fichier à la main marche aussi, mais un onglet « modifié non sauvegardé »
+   n'est pas pris en compte au build, et la compilation échoue sur
+   `fatal error: PubSubClient.h: No such file or directory`.
 4. Onglet `sketch.ino` : coller [`sketch.ino`](sketch.ino).
 5. ▶ *Start the simulation*. Le moniteur série (115200 bauds) doit afficher :
 
