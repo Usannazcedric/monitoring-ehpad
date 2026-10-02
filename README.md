@@ -1,121 +1,241 @@
-# Monitoring EHPAD — architecture et écarts
+# Projet 2 — Monitoring EHPAD (IoT / IA)
 
-État des lieux du **Projet 2 — IoT Santé** : plateforme de surveillance temps réel de 20 résidents
-en EHPAD. Capteurs simulés, ingestion MQTT, scoring ML, alertes à cinq niveaux avec auto-escalade,
-détection de fugue, résumé quotidien par LLM local.
+Plateforme de surveillance temps réel de 20 résidents en EHPAD. Capteurs simulés (constantes vitales, mouvement, ambiance), ingestion MQTT, scoring ML hybride (anomaly + tendance), moteur d'alertes 5 niveaux avec auto-escalade, détection de fugue, résumé quotidien généré par LLM local, et tableau de bord React temps réel.
 
-Ce document donne l'architecture telle qu'elle est aujourd'hui, puis liste et cote ce qui manque
-pour en faire un produit utilisable dans un établissement.
-
-> 9 services Docker · ~4 700 lignes · 59 tests backend, 0 côté front · 74 commits, avril 2026
-
-**Code du projet analysé : [Usannazcedric/projet-2-iot-sante](https://github.com/Usannazcedric/projet-2-iot-sante)**
-
-**Version mise en page : [`etat-des-lieux.pdf`](etat-des-lieux.pdf)** — 4 pages A4.
-Version web : [`etat-des-lieux.html`](etat-des-lieux.html), fichier autonome, à ouvrir dans un navigateur.
+L'ensemble s'exécute via un seul `docker compose up -d --build`.
 
 ---
 
-## 1. Architecture
+## Où en est le projet
 
-```mermaid
-flowchart TB
-  SIM["Simulateur FastAPI<br/>20 profils · scénarios injectables"]
-  MQ["Mosquitto · MQTT<br/>broker"]
-  BE["Backend FastAPI<br/>ingestion · alertes · escalade · ML · LLM"]
-  WS["ws-gateway Node<br/>MQTT vers WebSocket"]
-  RD["Redis<br/>état courant · TTL 60 s"]
-  IN["InfluxDB<br/>séries temporelles · 30 j"]
-  OL["Ollama<br/>LLM local · résumés"]
-  FE["Frontend React + nginx<br/>grille · détail · alertes · plan"]
+Ce dépôt **continue** le projet de l'an dernier (Digi4), archivé tel quel sur
+[`Usannazcedric/projet-2-iot-sante`](https://github.com/Usannazcedric/projet-2-iot-sante).
 
-  SIM -->|"vitals 1 Hz · motion 5 Hz · portes 0,2 Hz"| MQ
-  MQ -->|"souscription ehpad/+/+/+"| BE
-  BE -->|"republie état, alertes, scores"| MQ
-  MQ --> WS
-  BE --> RD
-  BE --> IN
-  BE --> OL
-  WS -->|WebSocket| FE
-  FE -->|"HTTP via nginx : /api /sim /ws"| BE
+| Livrable | Où |
+| --- | --- |
+| Architecture et écarts avec un produit fini (16 écarts cotés) | [`docs/etat-des-lieux.pdf`](docs/etat-des-lieux.pdf) · [version web](docs/etat-des-lieux.html) |
+| Contrat MQTT — correspondance Digi4 → Digi5 | [`docs/contrat_mqtt.md`](docs/contrat_mqtt.md) |
+| Module 1 — firmware ESP32 qui remplace le simulateur Python | [`firmware/m1_wokwi/`](firmware/m1_wokwi/) |
+
+Le firmware ESP32 publie sur les **mêmes topics et les mêmes formats JSON** que le
+simulateur Python : le backend, le moteur d'alertes et le dashboard décrits ci-dessous
+fonctionnent sans modification, qu'ils soient alimentés par le simulateur ou par la carte.
+
+## Démarrage rapide
+
+```bash
+git clone https://github.com/Usannazcedric/monitoring-ehpad.git
+cd monitoring-ehpad
+docker compose up -d --build
 ```
 
-| Couche | Services |
+Attendre que les services soient `healthy` (~30 s, plus le pull du modèle Ollama ~2 GB au premier démarrage). Puis ouvrir :
+
+- **Dashboard** : http://localhost:3000
+- API backend : http://localhost:8000/health
+- API simulator : http://localhost:9100/health
+- WebSocket gateway : http://localhost:8080/health
+- Ollama (LLM local) : http://localhost:11434
+
+Vérifier l'état :
+
+```bash
+docker compose ps
+```
+
+---
+
+## Stack technique
+
+| Couche | Technologie |
 | --- | --- |
-| Capteurs *(simulés)* | Simulateur FastAPI — 20 profils, scénarios chute / cardiaque / fugue / dégradation |
-| Bus temps réel | Mosquitto — découple le producteur de données du backend et de l'interface |
-| Traitement | Backend FastAPI · ws-gateway Node |
-| Persistance | Redis · InfluxDB · Ollama |
-| Restitution | Frontend React servi par nginx |
-
-MQTT fait la colonne vertébrale : le backend y republie l'état mergé au lieu de pousser directement
-vers l'interface, donc **le simulateur se remplace par de vrais capteurs sans toucher au backend**.
-Le navigateur ne parle qu'à nginx, d'où l'absence de configuration CORS dans le code.
-Les neuf services démarrent par un unique `docker compose up`.
-
----
-
-## 2. Écarts techniques
-
-Chaque ligne porte la dimension de la grille qu'elle couvre.
-
-| | Dimension | Écart | Criticité | Effort |
-| --- | --- | --- | --- | --- |
-| **T1** | Données & capteur | **Aucun capteur réel.** Toute la mesure est tirée d'une loi normale par le simulateur. Pas de pilote BLE ou LoRa, pas d'appairage, pas de gestion de batterie ni de perte de lien, et aucun traitement des artefacts de mesure — bracelet retiré, brassard mal posé, résident qui bouge. | 🔴 Bloquant | Élevé |
-| **T2** | Diffusion | **L'alerte ne sort pas du navigateur.** Un toast dans l'onglet ouvert, rien d'autre. La nuit, personne devant l'écran : il faut du SMS, du push ou le bip de l'établissement. | 🔴 Bloquant | Moyen |
-| **T3** | Identité | **Aucune authentification.** Toutes les routes sont ouvertes. N'importe qui lit les constantes des 20 résidents et peut acquitter — donc éteindre — une alerte vitale. | 🔴 Bloquant | Moyen |
-| **T4** | Sécurité device | **MQTT anonyme, secrets en clair, pas de mise à jour.** `allow_anonymous true` et zéro TLS : un faux client peut injecter de fausses constantes. Le jeton InfluxDB est écrit en clair dans `docker-compose.yml`, et aucun mécanisme de mise à jour à distance (OTA) n'est prévu pour un parc de capteurs. | 🔴 Bloquant | Moyen |
-| **T5** | Référentiels | **Résidents et personnel codés en dur.** Déclarés en Python. Admettre un résident ou le changer de chambre demande un redéploiement. | 🔴 Bloquant | Moyen |
-| **T6** | IA | **Modèle entraîné sur nos propres données simulées.** L'IsolationForest apprend le simulateur, pas la physiologie. Aucun jeu de données réel, aucune mesure de faux positifs. | 🟠 Majeur | Élevé |
-| **T7** | Disponibilité | **Un seul backend, escalades en mémoire.** S'il redémarre, les escalades en cours disparaissent sans bruit : une alerte non acquittée ne montera jamais. La panne est silencieuse, c'est le pire des cas. | 🟠 Majeur | Élevé |
-| **T8** | Données | **Données éphémères, aucune sauvegarde.** Volumes Docker locaux, rétention Influx de 30 jours. Aucune trace horodatée de qui a acquitté quelle alerte — rien d'opposable en cas de litige. | 🟠 Majeur | Moyen |
-| **T9** | Interopérabilité | **Aucun lien avec le système d'information de l'établissement.** Ni FHIR, ni HL7, aucune route d'export. Les données restent prisonnières de la plateforme et ne remontent pas au dossier de soin : le soignant ressaisit à la main. | 🟠 Majeur | Moyen |
-| **T10** | Qualité | **Pas de CI, aucun test front.** 59 tests backend solides, mais rien sur React ni sur la chaîne complète capteur → alerte → écran, et rien ne s'exécute automatiquement. | ⚪ Mineur | Faible |
+| Simulateur capteurs | Python 3.11, FastAPI, asyncio, NumPy |
+| Ingestion temps réel | MQTT (Eclipse Mosquitto 2) |
+| Backend API + moteur d'alertes | Python 3.11, FastAPI, Pydantic v2, asyncio |
+| Cache d'état temps réel | Redis 7 |
+| Historique time-series | InfluxDB 2.7 |
+| Machine Learning | scikit-learn (IsolationForest), NumPy |
+| Pont WebSocket | Node 20, `ws`, `mqtt` |
+| Frontend | React 18, Vite, TypeScript, Tailwind, Zustand, Recharts |
+| LLM local (résumés) | Ollama (llama3.2:3b par défaut) |
+| Orchestration | Docker Compose |
 
 ---
 
-## 3. Écarts produit et réglementaires
+## Fonctionnalités
 
-Ceux qu'aucun sprint de développement ne ferme : ils se traitent en amont du code.
+### Cœur (sprints 1–7)
+- **Simulateur** : 20 profils résidents, scénarios injectables (chute, cardiaque, errance, dégradation lente), publication MQTT à 1 Hz (vitals) / 5 Hz (motion) / 0,2 Hz (ambient).
+- **Backend** : ingestion MQTT, cache Redis (TTL 60 s), historique Influx, API REST documentée.
+- **Moteur d'alertes** : 5 niveaux (Information → Danger vital), règles seuils + score ML, auto-escalade L2→L3→L4→L5 si non-acquittée. Sticky : descend pas, monte seulement.
+- **ML hybride** : un IsolationForest par résident (entraîné au boot sur 7 jours synthétiques) + pente HR/SpO2/temp sur 15 min → `risk = 0.6 × anomaly + 0.4 × trend`. Mis à jour toutes les 30 s.
+- **WebSocket gateway** : pont MQTT ↔ WebSocket pour pousser alertes/états/risques au front sans CORS.
+- **Frontend** : grille des 20 résidents (triée par niveau d'alerte), page détaillée avec graphiques temps réel, journal d'alertes, plan de l'EHPAD avec mouvements, gestion du personnel et planning.
 
-| | Dimension | Écart | Criticité | Effort |
-| --- | --- | --- | --- | --- |
-| **R1** | Statut | **Le produit n'est jamais qualifié.** Bien-être ou dispositif médical ? Il calcule un score de risque et déclenche une alerte de soin : très probablement un DM au sens du règlement 2017/745, donc marquage CE, dossier technique et organisme notifié. La question n'a pas été instruite. | 🔴 Bloquant | Hors dev |
-| **R2** | Risques | **Aucune analyse de risques.** « Que se passe-t-il si l'alerte ne part pas ? » n'a pas de réponse écrite, alors que c'est exactement le mode de défaillance qui blesse. Ni AMDEC, ni ISO 14971, ni conduite à tenir en cas de panne. | 🔴 Bloquant | Moyen |
-| **R3** | Données personnelles | **Ni hébergement HDS, ni AIPD, ni consentement.** Des données de santé nominatives imposent les trois. Aucun n'existe : le système tourne sur des volumes Docker locaux, sans analyse d'impact ni recueil du consentement des résidents ou de leurs tuteurs. | 🔴 Bloquant | Hors dev |
-| **R4** | Validation | **Performance jamais prouvée contre une référence.** Ni sensibilité, ni spécificité, ni taux de fausses alertes par nuit. Impossible d'affirmer que le système détecte mieux qu'une ronde — or c'est la seule promesse qui justifie de l'acheter. | 🟠 Majeur | Élevé |
-| **R5** | Usage | **Jamais testé avec de vrais soignants ni résidents.** Zéro essai terrain. On ignore si cinq niveaux d'alerte restent tenables une nuit à deux aides-soignantes, et si le tableau de bord est lisible dans le couloir plutôt qu'au bureau. | 🟠 Majeur | Moyen |
-| **R6** | Modèle économique | **Qui paie n'a pas été abordé.** L'établissement, l'ARS, la famille ? La réponse décide du périmètre à construire : un forfait par lit et un abonnement par résident ne donnent pas le même produit. | ⚪ Mineur | Hors dev |
-
-**Criticité** — 🔴 Bloquant : empêche la mise en service · 🟠 Majeur : exploitation dégradée · ⚪ Mineur : dette acceptable
-**Effort** — Faible ≤ 2 j · Moyen 3–8 j · Élevé > 8 j · Hors dev = ni code ni sprint
-
----
-
-## 4. Ce qu'il faut en retenir
-
-**La chaîne fonctionne de bout en bout** : un capteur publie, l'alerte arrive à l'écran en moins de
-deux secondes, l'escalade s'enclenche seule, le ML anticipe une dégradation. Comme démonstrateur,
-c'est complet.
-
-**Ce qui manque n'est presque jamais une fonctionnalité.** Ce sont les capteurs physiques, une
-identité derrière chaque geste, et une alerte qui franchit les limites du navigateur. Tant que ces
-trois-là manquent, un établissement ne peut pas brancher le système.
-
-**Et la moitié du chemin restant ne s'écrit pas en code.** Qualifier le produit, analyser les
-risques, encadrer les données personnelles, mesurer la détection contre une référence, essayer le
-tout avec de vrais soignants : six écarts sur seize se jouent avant le premier commit. C'est là que
-se trouve la vraie distance avec un produit fini.
-
-Dans quel ordre fermer les écarts :
-
-1. **D'abord** — T2, T3 et R2 : faire sortir l'alerte de l'écran, savoir qui l'acquitte, et écrire
-   noir sur blanc ce qui se passe quand elle ne part pas.
-2. **Ensuite** — T4, T5, T8 et R3 : chiffrement, référentiels en base, sauvegardes, et le cadre
-   RGPD-HDS sans lequel aucune donnée réelle ne peut entrer.
-3. **Enfin** — T1, T6, R1 et R4 : vrais capteurs, validation du modèle contre une référence,
-   qualification réglementaire. Les gros chantiers, et ils vont ensemble.
+### Bonus (livraison finale)
+- **C1 — Détection de fugue** : alerte L4 URGENCE quand un résident sort de sa chambre dans des conditions à risque. Deux paths :
+  1. Pathologie cognitive (Alzheimer / démence) + porte ouverte + activité `walking` (détection organique).
+  2. Scénario `fugue` injecté manuellement + porte ouverte (déclenchement explicite, indépendant du profil).
+- **C2 — Résumé LLM quotidien** : endpoint `GET /residents/{id}/summary` qui agrège constantes, activité et alertes des 24 dernières heures, et produit un rapport markdown structuré (Synthèse / Constantes / Activité / Alertes / Recommandations) via le LLM Ollama local. Repli automatique sur un template déterministe si Ollama indisponible.
 
 ---
 
-Projet 2 — IoT Santé · Titouan Brunet, Cedric Usannaz et Fares Mansour · dépôt au 30 avril 2026
+## Comment tester
+
+### Voir une chute (alerte L4)
+```bash
+curl -X POST http://localhost:9100/scenario/R007 \
+  -H 'Content-Type: application/json' -d '{"name":"fall"}'
+```
+Toast en haut à droite + badge dans NavBar + entrée dans `/alerts`.
+
+### Voir une dégradation lente (ML prédit avant les seuils)
+```bash
+curl -X POST http://localhost:9100/scenario/R007 \
+  -H 'Content-Type: application/json' -d '{"name":"degradation"}'
+```
+Le score de risque monte, l'alerte arrive avant que les seuils HR/SpO2 ne soient franchis.
+
+### Voir une fugue (bonus C1)
+1. Ouvrir n'importe quel résident dans le dashboard.
+2. Bas de page → carte « Simulation de scénarios » → cliquer **Sortie / Fugue**.
+3. ~5 s plus tard : toast top-right « Urgence — fugue détectée ».
+
+Ou en CLI :
+```bash
+curl -X POST http://localhost:9100/scenario/R002 \
+  -H 'Content-Type: application/json' -d '{"name":"fugue"}'
+```
+
+### Générer un rapport quotidien (bonus C2)
+1. Ouvrir un résident.
+2. Carte « Rapport quotidien » → bouton **Générer**.
+3. Premier appel ~2 min (cold-start LLM), suivants <30 s.
+
+---
+
+## Endpoints API principaux
+
+### Backend (port 8000)
+| Méthode | Route | Description |
+| --- | --- | --- |
+| GET | `/health` | Statut des dépendances (Redis, Influx, MQTT) |
+| GET | `/residents` | Snapshots des 20 résidents |
+| GET | `/residents/{id}` | Détail d'un résident |
+| GET | `/residents/{id}/history?metric=vitals&minutes=15` | Time-series Influx |
+| GET | `/residents/{id}/activity-pattern?hours=24` | Répartition horaire des activités |
+| GET | `/residents/{id}/summary?hours=24` | **Rapport LLM** (bonus C2) |
+| GET | `/alerts` | Alertes actives |
+| POST | `/alerts/{id}/ack` | Acquitter |
+| POST | `/alerts/{id}/resolve` | Résoudre |
+| GET | `/rooms` | États des chambres (PIR + porte) |
+| GET | `/staff` | Personnel + assignation |
+
+### Simulator (port 9100)
+| Méthode | Route | Description |
+| --- | --- | --- |
+| GET | `/health` | Statut |
+| GET | `/residents` | Profils complets |
+| POST | `/scenario/{id}` body `{"name":"fall\|cardiac\|wandering\|degradation\|fugue\|normal"}` | Injecter un scénario |
+
+### WebSocket (port 8080)
+- `ws://localhost:8080/ws` — broadcast d'enveloppes `{ topic, data }`.
+- Topics : `state/resident/{id}`, `state/room/{id}`, `alerts/new`, `alerts/update/{id}`, `risk/resident/{id}`.
+
+---
+
+## Variables d'environnement
+
+| Variable | Service | Défaut | Rôle |
+| --- | --- | --- | --- |
+| `DEMO_MODE` | backend, simulator | `true` | Compresse les délais d'escalade (10 min → 60 s) |
+| `MQTT_HOST` | tous | `mosquitto` | Hôte MQTT |
+| `REDIS_URL` | backend | `redis://redis:6379` | URL Redis |
+| `INFLUX_URL` | backend | `http://influxdb:8086` | URL Influx |
+| `INFLUX_TOKEN` | backend | `ehpad-token-dev` | Token Influx (dev only) |
+| `MODELS_DIR` | backend | `/models` | Persistance des modèles ML |
+| `OLLAMA_URL` | backend | `http://ollama:11434` | URL Ollama |
+| `OLLAMA_MODEL` | backend, ollama-init | `llama3.2:3b` | Modèle LLM utilisé |
+| `RESIDENT_COUNT` | simulator | `20` | Nombre de résidents |
+
+---
+
+## Structure du projet
+
+```
+.
+├── backend/              # FastAPI + moteur d'alertes + ML + LLM
+│   ├── app/
+│   │   ├── alerts/       # rules.py, fugue.py, engine.py, escalation.py
+│   │   ├── api/          # routes HTTP
+│   │   ├── ingest/       # client MQTT + handlers
+│   │   ├── ml/           # IsolationForest + trend + risk publisher
+│   │   ├── storage/      # Redis + Influx
+│   │   ├── profiles.py   # registre statique des résidents
+│   │   └── summary.py    # générateur de rapport LLM (bonus C2)
+│   └── tests/            # 60+ tests pytest
+├── simulator/            # FastAPI + asyncio publisher MQTT
+│   └── app/
+│       ├── scenarios.py  # Normal, Fall, Cardiac, Wandering, Degradation, Fugue
+│       └── sensors/      # vitals, motion, ambient
+├── ws-gateway/           # Node bridge MQTT ↔ WebSocket
+├── frontend/             # React + Vite + TS + Tailwind
+│   └── src/
+│       ├── pages/        # Grid, ResidentDetail, AlertLog, Movements, Staff
+│       ├── components/   # NavBar, AlertToast, FloorPlan, …
+│       ├── hooks/        # useBootstrap (REST + WS)
+│       └── store/        # Zustand
+├── mosquitto/            # config MQTT
+├── firmware/
+│   └── m1_wokwi/         # Module 1 Digi5 : firmware ESP32 (remplace le simulateur)
+│       ├── diagram.json  # montage Wokwi : MPU-6050, bouton SOS, buzzer, potentiomètre
+│       ├── libraries.txt
+│       └── sketch.ino
+├── docker-compose.yml
+├── docs/
+│   ├── architecture.md   # Documentation technique détaillée
+│   ├── contrat_mqtt.md   # Topics, formats JSON, seuils (Digi4 → Digi5)
+│   └── etat-des-lieux.pdf # Architecture + 16 écarts avec un produit fini
+└── README.md
+```
+
+---
+
+## Tests
+
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pytest -q          # ~60 tests, < 5 s
+```
+
+---
+
+## Documentation technique
+
+Voir [`docs/architecture.md`](docs/architecture.md) pour :
+- diagramme d'architecture détaillé
+- flux de données (capteur → MQTT → backend → cache → frontend)
+- schéma de stockage (Redis keys, Influx measurements)
+- modèle ML (entrée, sortie, ré-entraînement)
+- contrat des messages MQTT
+- choix techniques et compromis
+
+Et aussi :
+- [`docs/contrat_mqtt.md`](docs/contrat_mqtt.md) — topics, formats JSON, contraintes de
+  validation Pydantic et seuils d'alerte, tels qu'ils sont réellement implémentés
+- [`docs/etat-des-lieux.pdf`](docs/etat-des-lieux.pdf) — architecture actuelle et les 16
+  écarts avec un produit utilisable en établissement, cotés en criticité et en effort
+- [`firmware/m1_wokwi/README.md`](firmware/m1_wokwi/README.md) — montage ESP32, seuils
+  embarqués et mode opératoire Wokwi
+
+---
+
+## Auteurs
+
+- Titouan Brunet
+- Usannaz Cedric
+- Fares Mansour
+
+Projet réalisé dans le cadre du Projet 2 — IoT Santé.

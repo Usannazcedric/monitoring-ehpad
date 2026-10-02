@@ -1,0 +1,5 @@
+# Bibliotheque Arduino pour le TP M1 (Wokwi)
+# Seule dependance externe : le MPU-6050 est lu par ses registres I2C
+# et le JSON est construit avec snprintf, pour que la compilation reste
+# sous la limite de l'offre gratuite de Wokwi.
+PubSubClient

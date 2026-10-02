@@ -1,0 +1,180 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: ehpad-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mosquitto-data:/mosquitto/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -t '$$SYS/#' -C 1 -E -i healthcheck -W 3"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: ehpad-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: ehpad-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_USERNAME:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:-ehpad-admin}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-ehpad}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET:-ehpad_vitals}
+      DOCKER_INFLUXDB_INIT_RETENTION: 720h
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_ADMIN_TOKEN:-ehpad-token-dev}
+    volumes:
+      - influx-data:/var/lib/influxdb2
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  simulator:
+    build: ./simulator
+    container_name: ehpad-simulator
+    ports:
+      - "9100:9100"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      API_PORT: 9100
+      RESIDENT_COUNT: 20
+      DEMO_MODE: "true"
+      LOG_LEVEL: INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9100/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  backend:
+    build: ./backend
+    container_name: ehpad-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      mosquitto: { condition: service_healthy }
+      redis:     { condition: service_healthy }
+      influxdb:  { condition: service_healthy }
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      REDIS_URL: redis://redis:6379
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: ehpad-token-dev
+      INFLUX_ORG: ehpad
+      INFLUX_BUCKET: ehpad_vitals
+      LOG_LEVEL: INFO
+      DEMO_MODE: "true"
+      MODELS_DIR: /models
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+    volumes:
+      - models-data:/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ehpad-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ehpad-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["ollama pull \"$$OLLAMA_MODEL\" && echo done"]
+    restart: "no"
+
+  ws-gateway:
+    build: ./ws-gateway
+    container_name: ehpad-ws-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      mosquitto: { condition: service_healthy }
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      WS_PORT: 8080
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    container_name: ehpad-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend: { condition: service_healthy }
+      ws-gateway: { condition: service_healthy }
+      simulator: { condition: service_healthy }
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+volumes:
+  mosquitto-data:
+  redis-data:
+  influx-data:
+  models-data:
+  ollama-data:
