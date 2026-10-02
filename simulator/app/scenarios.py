@@ -42,7 +42,7 @@ class Fall:
     def apply(self, r: Resident, now: datetime) -> None:
         if self.started is None:
             self.started = now
-            r.activity = "falling"
+            r.activity = "fall"  # valeur testee par backend/app/alerts/rules.py
             r.scenario = "fall"
         elif (now - self.started).total_seconds() > 1.0:
             r.activity = "lying"

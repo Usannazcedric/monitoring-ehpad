@@ -7,6 +7,8 @@ const COLORS: Record<string, string> = {
   idle:          "bg-zinc-500",
   sitting:       "bg-sky-700",
   walking:       "bg-green-600",
+  fall:          "bg-red-600",
+  falling:       "bg-red-600",
   fall_detected: "bg-red-600",
   expected:      "bg-zinc-700",   // expected but no data yet
 };
@@ -15,6 +17,8 @@ const LABELS: Record<string, string> = {
   idle:          "Debout / repos",
   sitting:       "Assis",
   walking:       "En mouvement",
+  fall:          "Chute détectée",
+  falling:       "Chute détectée",
   fall_detected: "Chute détectée",
 };
 
@@ -60,7 +64,7 @@ function toParisMinutes(d: Date): number {
 
 /** Dominant observed activity, priority: fall > walking > sitting > lying > idle */
 function dominant(d: ActivityHour): string | null {
-  const PRIORITY = ["fall_detected", "walking", "sitting", "lying", "idle"];
+  const PRIORITY = ["fall", "falling", "fall_detected", "walking", "sitting", "lying", "idle"];
   for (const act of PRIORITY) {
     if (Number(d[act] ?? 0) > 0) return act;
   }

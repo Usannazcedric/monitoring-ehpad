@@ -8,7 +8,7 @@ import { AlertBadge } from "@/components/AlertBadge";
 import { AckButton } from "@/components/AckButton";
 import { VitalChart } from "@/components/VitalChart";
 import { DailySchedule } from "@/components/DailySchedule";
-import { fmtRelative, LEVEL_LABELS, LEVEL_DESCRIPTIONS, ACTIVITY_LABELS, STATUS_BY_LEVEL } from "@/lib/format";
+import { fmtRelative, LEVEL_LABELS, LEVEL_DESCRIPTIONS, ACTIVITY_LABELS, STATUS_BY_LEVEL, isFallActivity } from "@/lib/format";
 import { highestLevelFor } from "@/store/store";
 import { RoomStatus } from "@/components/RoomStatus";
 
@@ -144,7 +144,7 @@ export function ResidentDetail() {
             />
             <div className="flex flex-col items-start">
               <div className="text-[10px] uppercase tracking-wide text-zinc-400">Activité</div>
-              <div className={`text-sm font-semibold mt-1 ${m?.activity === "fall_detected" ? "text-red-400" : "text-white"}`}>
+              <div className={`text-sm font-semibold mt-1 ${isFallActivity(m?.activity) ? "text-red-400" : "text-white"}`}>
                 {activityLabel}
               </div>
             </div>

@@ -20,16 +20,19 @@ class InfluxWriter:
         self._client.close()
 
     async def write_vitals(self, resident_id: str, ts: str, values: dict[str, Any]) -> None:
-        p = (
-            Point("vitals")
-            .tag("resident_id", resident_id)
-            .field("hr", int(values["hr"]))
-            .field("spo2", int(values["spo2"]))
-            .field("sys", int(values["sys"]))
-            .field("dia", int(values["dia"]))
-            .field("temp", float(values["temp"]))
-            .time(ts)
-        )
+        # Un capteur réel ne mesure pas forcément toutes les constantes : on
+        # n'écrit que les champs présents plutôt que d'inventer un zéro, qui
+        # serait indistinguable d'une mesure et fausserait les historiques.
+        p = Point("vitals").tag("resident_id", resident_id).time(ts)
+        written = 0
+        for name, cast in (("hr", int), ("spo2", int), ("sys", int), ("dia", int), ("temp", float)):
+            raw = values.get(name)
+            if raw is None:
+                continue
+            p = p.field(name, cast(raw))
+            written += 1
+        if written == 0:
+            return  # un point sans field est rejeté par InfluxDB
         await asyncio.to_thread(self._write.write, bucket=self.bucket, org=self.org, record=p)
 
     async def write_motion(self, resident_id: str, ts: str, values: dict[str, Any]) -> None:

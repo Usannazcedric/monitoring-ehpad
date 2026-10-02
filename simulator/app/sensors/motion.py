@@ -33,4 +33,7 @@ def generate(activity: str, rng: np.random.Generator) -> Accel:
 def fall_pattern(rng: np.random.Generator) -> Accel:
     spike = float(rng.uniform(20.0, 35.0))
     ax = float(rng.normal(0.0, 1.5))
-    return Accel(ax=round(ax, 3), ay=round(spike, 3), az=round(0.0, 3), activity="falling")
+    # "fall" et pas "falling" : c'est la valeur que teste backend/app/alerts/rules.py
+    # et celle qu'emet le firmware ESP32. Avec "falling", une chute simulee ne
+    # declenchait jamais l'alerte de niveau 4.
+    return Accel(ax=round(ax, 3), ay=round(spike, 3), az=round(0.0, 3), activity="fall")

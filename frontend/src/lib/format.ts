@@ -42,9 +42,21 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   walking: "En marche",
   sitting: "Assis(e)",
   lying: "Allongé(e)",
+  // Trois orthographes circulent pour la chute : "falling" vient du simulateur
+  // Python, "fall" est la valeur que teste le moteur d'alertes du backend et que
+  // publie le firmware ESP32, "fall_detected" était la seule attendue ici. Tant
+  // que les producteurs ne sont pas alignés, le dashboard les accepte toutes —
+  // sinon une chute s'affiche comme une activité inconnue.
+  fall: "CHUTE DETECTEE",
+  falling: "CHUTE DETECTEE",
   fall_detected: "CHUTE DETECTEE",
   stationary: "Immobile",
 };
+
+/** Vrai pour toutes les orthographes de chute en circulation. */
+export function isFallActivity(activity?: string | null): boolean {
+  return activity === "fall" || activity === "falling" || activity === "fall_detected";
+}
 
 export const STATUS_BY_LEVEL: Record<number, { text: string; cls: string }> = {
   0: { text: "Tout va bien", cls: "text-green-400" },

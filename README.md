@@ -21,6 +21,33 @@ Le firmware ESP32 publie sur les **mêmes topics et les mêmes formats JSON** qu
 simulateur Python : le backend, le moteur d'alertes et le dashboard décrits ci-dessous
 fonctionnent sans modification, qu'ils soient alimentés par le simulateur ou par la carte.
 
+### Faire entrer la carte ESP32 dans le dashboard
+
+La carte simulée dans Wokwi ne peut pas joindre le Mosquitto local : elle publie sur
+`broker.hivemq.com`, et un **pont Mosquitto** rapatrie ses messages en leur rendant leur
+topic Digi4. Rien d'autre à faire que démarrer la stack :
+
+```bash
+docker compose up -d --build
+```
+
+Puis lancer la simulation Wokwi (voir [`firmware/m1_wokwi/`](firmware/m1_wokwi/)). La carte
+alimente le résident **R021, chambre 121**, hors de la plage du simulateur Python
+(R001–R020), pour que les deux sources ne se contredisent jamais sur un même résident.
+
+Ce qu'on voit alors sur http://localhost:3000 :
+
+- la fiche **R021** suit le potentiomètre avec environ 2 s de décalage ;
+- SpO₂, tension et température affichent `—` : la carte ne les mesure pas, et elles ne
+  sont pas inventées ;
+- au-delà de 100 bpm, le moteur d'alertes du backend lève une alerte **Attention**, puis
+  **Urgence** au-delà de 140 ;
+- l'appui sur le bouton SOS fait apparaître une alerte de niveau **5** et déclenche le
+  buzzer de la carte.
+
+Le pont est unidirectionnel : rien de ce qui circule en local ne part vers le broker
+public. Détail dans [`docs/contrat_mqtt.md`](docs/contrat_mqtt.md) §6.
+
 ## Démarrage rapide
 
 ```bash

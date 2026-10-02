@@ -62,19 +62,29 @@ Au besoin, changer `TEAM_ID` en haut de `sketch.ino` : c'est la **seule** valeur
 Préfixe : `digi5/<TEAM_ID>/ehpad` — `broker.hivemq.com` est un broker public partagé par
 toute la promo, un topic `ehpad/...` nu entrerait en collision avec celui d'une autre équipe.
 
+Un **pont Mosquitto** (`mosquitto/config/mosquitto.conf`) rapatrie ces topics sur le broker
+local en leur rendant leur nom Digi4, de sorte que le backend, le moteur d'alertes, le ML
+et le dashboard voient la carte exactement comme ils voient le simulateur. Le pont est
+unidirectionnel : rien ne repart vers le broker public. Détails dans
+[`../../docs/contrat_mqtt.md`](../../docs/contrat_mqtt.md) §6.
+
 | Topic | Fréquence | Contenu |
 | --- | --- | --- |
-| `…/vitals/resident/R001` | 0,5 Hz | `hr` lue sur le potentiomètre |
-| `…/motion/resident/R001` | 0,5 Hz | `ax`, `ay`, `az` (en m/s²), `activity` |
-| `…/alerts/new` | sur événement | Alerte au format `Alert` du backend, niveau 1 à 5 |
+| `…/vitals/resident/R021` | 0,5 Hz | `hr` lue sur le potentiomètre |
+| `…/motion/resident/R021` | 0,5 Hz | `ax`, `ay`, `az` (en m/s²), `activity` |
+| `…/alerts/new` | appui SOS | Alerte au format `Alert` du backend, niveau 5 |
 | `…/device/esp32-01/status` | connexion / perte | `online` (retenu) / `offline` (Last Will) |
+
+La carte alimente **R021**, volontairement hors de la plage du simulateur Python
+(R001 à R020) : les deux sources ne peuvent donc pas se contredire sur un même résident.
+Le profil est déclaré dans `backend/app/profiles.py`, chambre 121.
 
 Exemple de message `vitals` :
 
 ```json
 {
   "timestamp": "2026-10-02T14:21:07.413Z",
-  "resident_id": "R001",
+  "resident_id": "R021",
   "values": { "hr": 78 },
   "vitals": { "hr": 78 },
   "scenario": "normal",
@@ -95,17 +105,23 @@ est écrite dans le contrat MQTT (§4).
 Repris à l'identique de `backend/app/alerts/rules.py`, pour que l'alerte du device et
 celle du backend ne puissent pas se contredire :
 
-| Déclencheur | Niveau | `reason` |
-| --- | --- | --- |
-| `hr < 40` ou `hr > 140` | 4 — URGENCE | `hr critical (<bpm>)` |
-| `hr > 100` | 2 — ATTENTION | `hr elevated (<bpm>)` |
-| `50 ≤ hr < 58` | 1 — INFORMATION | `rythme cardiaque légèrement bas (<bpm>)` |
-| Norme d'accélération > 2,5 g | 4 — URGENCE | `fall detected` |
-| Bouton SOS | 5 — DANGER VITAL | `appel SOS du resident` |
+| Déclencheur | Niveau | Buzzer | Publié sur MQTT |
+| --- | --- | --- | --- |
+| `hr < 40` ou `hr > 140` | 4 — URGENCE | oui | non |
+| `hr > 100` | 2 — ATTENTION | non | non |
+| `50 ≤ hr < 58` | 1 — INFORMATION | non | non |
+| Norme d'accélération > 2,5 g | 4 — URGENCE | oui | non |
+| Bouton SOS | 5 — DANGER VITAL | oui | **oui** |
 
-Une alerte n'est publiée que lorsque le **niveau change** : republier la même alerte
-toutes les 2 secondes rendrait le journal du dashboard illisible. Le buzzer sonne 3 s
-dès le niveau 4.
+Pourquoi la carte ne publie que le SOS : le backend reçoit déjà les `vitals` et le
+`motion`, et les évalue avec **exactement les mêmes seuils**. Republier depuis le device
+ferait apparaître chaque alerte **deux fois** dans le dashboard. Le SOS, lui, n'existe
+nulle part dans `rules.py` : aucune mesure ne le trahit, le device est le seul à pouvoir
+le signaler. L'évaluation embarquée reste entière pour ce qu'elle sert vraiment ici —
+réagir sans réseau, tout de suite, avec le buzzer.
+
+Une alerte n'est émise que lorsque le **niveau change** : la réémettre toutes les 2 s
+rendrait le journal illisible. Le buzzer sonne 3 s dès le niveau 4.
 
 Les niveaux 5 et 3 du backend exigent la SpO2 (`spo2 < 85`, `spo2 < 93`), que cette carte
 ne mesure pas : ils restent inatteignables depuis le device, hors bouton SOS.
@@ -130,4 +146,5 @@ ne mesure pas : ils restent inatteignables depuis le device, hors bouton SOS.
   ne contient que des placeholders ; les identifiants HiveMQ Cloud ne doivent jamais
   être commités.
 - `RESIDENT_ID` doit respecter `^R\d{3}$` : le backend rejette tout autre format
-  (`backend/app/models.py`).
+  (`backend/app/models.py`). En changer la valeur impose de déclarer le profil
+  correspondant dans `backend/app/profiles.py`.

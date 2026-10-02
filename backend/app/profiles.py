@@ -24,6 +24,10 @@ PROFILES: dict[str, dict] = {
     "R018": {"name": "Roger W.",      "age": 76, "room": "118", "pathologies": []},
     "R019": {"name": "Simone E.",     "age": 88, "room": "119", "pathologies": ["alzheimer"]},
     "R020": {"name": "Claude J.",     "age": 81, "room": "120", "pathologies": ["hypertension"]},
+    # R021 n'est pas simulé : il est alimenté par la carte ESP32 du module 1
+    # (firmware/m1_wokwi). Le simulateur Python s'arrête à R020, les deux
+    # sources ne peuvent donc pas se marcher dessus sur le même résident.
+    "R021": {"name": "Capteur réel", "age": 83, "room": "121", "pathologies": ["hypertension"]},
 }
 
 DISORIENTING = {"alzheimer", "dementia"}

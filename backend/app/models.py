@@ -5,11 +5,18 @@ from pydantic import BaseModel, Field
 
 
 class VitalsValues(BaseModel):
+    """Constantes vitales d'un résident.
+
+    Seule `hr` est obligatoire. Un capteur réel ne mesure pas forcément tout :
+    l'ESP32 du module 1 ne remonte que la fréquence cardiaque. Une constante
+    absente vaut None — elle n'est ni inventée, ni interprétée comme normale,
+    et les règles d'alerte la sautent explicitement (voir alerts/rules.py).
+    """
     hr: int
-    spo2: int
-    sys: int
-    dia: int
-    temp: float
+    spo2: int | None = None
+    sys: int | None = None
+    dia: int | None = None
+    temp: float | None = None
 
 
 class MotionValues(BaseModel):

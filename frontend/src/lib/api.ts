@@ -44,6 +44,8 @@ export interface ActivityHour {
   sitting?: number;
   walking?: number;
   lying?: number;
+  fall?: number;
+  falling?: number;
   fall_detected?: number;
   [key: string]: string | number | undefined;
 }

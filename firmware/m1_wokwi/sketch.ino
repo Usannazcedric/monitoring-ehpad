@@ -32,10 +32,13 @@ const int   WIFI_CHANNEL  = 6;  // 6 accelere Wokwi ; mettre 0 sur la vraie cart
 // LA SEULE LIGNE A CHANGER SI L'INTERVENANT IMPOSE UN NOM D'EQUIPE :
 const char* TEAM_ID = "equipe-ehpad";
 
-// Identifiants FICTIFS, alignes sur simulator/profiles.json du projet Digi4.
-// RESIDENT_ID doit matcher ^R\d{3}$ : le backend rejette tout le reste.
-const char* RESIDENT_ID = "R001";
-const char* ROOM_ID     = "101";
+// Identifiants FICTIFS. RESIDENT_ID doit matcher ^R\d{3}$ : le backend rejette
+// tout le reste. R021 est volontairement HORS de la plage du simulateur Python
+// (R001..R020) : les deux sources alimentent ainsi des residents differents et
+// ne peuvent pas se contredire sur le meme. Le profil correspondant est declare
+// dans backend/app/profiles.py.
+const char* RESIDENT_ID = "R021";
+const char* ROOM_ID     = "121";
 const char* DEVICE_ID   = "esp32-01";
 
 #if USE_TLS
@@ -241,8 +244,22 @@ bool connectMqtt() {
 }
 
 // ======================= 8. PUBLICATIONS =======================
-// Format exact de backend/app/models.py:Alert, pour que le dashboard affiche
-// l'alerte du device comme n'importe quelle alerte du backend.
+// Alerte LOCALE : buzzer et moniteur serie, rien sur MQTT.
+//
+// Pourquoi ne pas tout publier : le backend recoit deja les vitals et le motion
+// de cette carte, et evalue hr et "fall" avec exactement les memes seuils
+// (backend/app/alerts/rules.py). Republier ces alertes depuis le device les
+// ferait apparaitre DEUX FOIS dans le dashboard, une par chemin. Le device
+// garde donc son evaluation embarquee pour ce qu'elle sert vraiment ici :
+// reagir sans reseau, tout de suite, en faisant sonner le buzzer.
+void localAlert(int level, const char* reason) {
+  Serial.printf("[ALERTE locale L%d] %s\n", level, reason);
+  if (level >= LEVEL_URGENCE) startAlarm();
+}
+
+// Alerte PUBLIEE, au format exact de backend/app/models.py:Alert. Reservee aux
+// evenements que le backend ne peut pas deduire des mesures : le bouton SOS
+// n'existe nulle part dans rules.py, aucune constante vitale ne le trahit.
 void publishAlert(int level, const char* reason) {
   String ts = isoTimestamp();
   String id = makeAlertId();
@@ -255,7 +272,7 @@ void publishAlert(int level, const char* reason) {
            id.c_str(), RESIDENT_ID, level, reason,
            ts.c_str(), ts.c_str(), ts.c_str(), DEVICE_ID);
   bool ok = mqtt.publish(topicAlerts.c_str(), payload, false);
-  Serial.printf("[ALERTE %s L%d] %s\n", ok ? "envoyee" : "NON ENVOYEE", level, payload);
+  Serial.printf("[ALERTE %s L%d] %s\n", ok ? "publiee" : "NON PUBLIEE", level, payload);
   if (level >= LEVEL_URGENCE) startAlarm();
 }
 
@@ -283,7 +300,7 @@ void publishVitals() {
   if (level != lastHrLevel && level != LEVEL_NONE) {
     char reason[64];
     hrReason(bpm, level, reason, sizeof(reason));
-    publishAlert(level, reason);
+    localAlert(level, reason);  // le backend publie la sienne depuis les vitals
   }
   lastHrLevel = level;
 }
@@ -318,7 +335,7 @@ void readImu() {
   if (normMs2 > FALL_THRESHOLD_MS2 && millis() - lastFallAlert > 10000) {
     lastFallAlert = millis();
     fallUntil = millis() + 5000;  // l'activite reste "fall" pendant 5 s
-    publishAlert(LEVEL_URGENCE, "fall detected");
+    localAlert(LEVEL_URGENCE, "fall detected");  // le backend la deduit du motion
   }
 }
 

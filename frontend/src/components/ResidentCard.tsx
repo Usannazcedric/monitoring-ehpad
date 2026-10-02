@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardBody } from "./ui/Card";
 import { VitalGauge } from "./VitalGauge";
 import { AlertBadge } from "./AlertBadge";
-import { fmtRelative, ACTIVITY_LABELS, STATUS_BY_LEVEL } from "@/lib/format";
+import { fmtRelative, ACTIVITY_LABELS, STATUS_BY_LEVEL, isFallActivity } from "@/lib/format";
 import type { ResidentSnapshot } from "@/lib/api";
 
 interface Props {
@@ -25,7 +25,7 @@ export function ResidentCard({ resident, level }: Props) {
   const ring = ringByLevel[level] ?? "ring-zinc-800";
   const status = STATUS_BY_LEVEL[level] ?? STATUS_BY_LEVEL[0];
   const activityLabel = m?.activity ? (ACTIVITY_LABELS[m.activity] ?? m.activity) : "—";
-  const isFall = m?.activity === "fall_detected";
+  const isFall = isFallActivity(m?.activity);
 
   return (
     <Link to={`/resident/${resident.resident_id}`} className="block" title="Cliquer pour voir les détails de ce résident">

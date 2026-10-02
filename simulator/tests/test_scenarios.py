@@ -13,12 +13,12 @@ def _profile(rid: str = "R900") -> Profile:
     )
 
 
-def test_fall_scenario_marks_activity_falling_then_lying():
+def test_fall_scenario_marks_activity_fall_then_lying():
     r = Resident.from_profile(_profile(), seed=1)
     s = build("fall", demo_mode=True)
     now = datetime(2026, 4, 29, 10, 0, 0, tzinfo=timezone.utc)
     s.apply(r, now)
-    assert r.activity in {"falling", "lying"}
+    assert r.activity in {"fall", "lying"}  # "fall" est la valeur que teste rules.py
 
 
 def test_cardiac_scenario_raises_hr_drops_spo2():

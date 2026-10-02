@@ -100,7 +100,7 @@ rejeté silencieusement.
 | Contrainte | Conséquence pour le firmware |
 | --- | --- |
 | `resident_id` doit matcher `^R\d{3}$` | `R001`, pas `P001` ni `patient-1` |
-| `VitalsValues` exige **hr, spo2, sys, dia, temp** — tous obligatoires | voir ci-dessous |
+| `VitalsValues` exige **hr** ; spo2, sys, dia, temp sont optionnels | voir ci-dessous |
 | `MotionValues` exige **ax, ay, az, activity** | le MPU-6050 les fournit tous |
 | `seq` est un entier obligatoire | compteur incrémental dans le firmware |
 
@@ -110,9 +110,9 @@ L'ESP32 du TP ne mesure **que** la fréquence cardiaque (potentiomètre, en atte
 MAX30102 du 30 octobre) et l'accélération. Il ne mesure ni SpO₂, ni pression, ni
 température. L'énoncé est explicite : **ne pas inventer ces valeurs**.
 
-Or `VitalsValues` les déclare obligatoires. Les deux exigences sont incompatibles en
-l'état. Décision retenue : **le firmware ne publie que ce qu'il mesure**, et c'est le
-backend qui devient tolérant. Le changement à faire côté backend, une ligne par champ :
+`VitalsValues` les déclarait obligatoires. Les deux exigences étaient incompatibles.
+Décision retenue : **le firmware ne publie que ce qu'il mesure**, et le backend est devenu
+tolérant. Appliqué dans `backend/app/models.py` :
 
 ```python
 class VitalsValues(BaseModel):
@@ -123,12 +123,19 @@ class VitalsValues(BaseModel):
     temp: float | None = None
 ```
 
-Les règles d'alerte (`backend/app/alerts/rules.py`) testent déjà `is not None` avant
-chaque comparaison : elles fonctionnent sans modification avec des champs absents.
-Ce changement n'est **pas** appliqué dans ce dépôt — il relève de l'étape 5 (affichage
-dans le dashboard), reportée.
+Trois conséquences, toutes vérifiées :
 
-En attendant, le firmware publie un champ `measured` qui liste explicitement ce qui est
+- `backend/app/alerts/rules.py` testait déjà `is not None` avant chaque comparaison :
+  aucune modification, une constante absente est simplement sautée.
+- `backend/app/storage/influx.py` écrivait `int(values["spo2"])` sans filet. Corrigé :
+  seuls les champs présents deviennent des *fields*, et un point sans aucun field n'est
+  pas écrit du tout. Un zéro à la place d'une mesure manquante serait indistinguable
+  d'une vraie mesure et fausserait les historiques.
+- `backend/app/ml/anomaly.py` ignorait déjà les échantillons incomplets
+  (`_to_matrix` saute les lignes en `KeyError`/`TypeError`) : le score d'anomalie d'un
+  résident dont on n'a que la FC vaut 0, et le risque ne repose plus que sur la tendance.
+
+Le firmware publie en plus un champ `measured` qui liste explicitement ce qui est
 réellement mesuré, pour qu'aucun consommateur ne confonde « absent » et « normal ».
 
 ## 5. Seuils d'alerte — `backend/app/alerts/rules.py`
@@ -144,29 +151,94 @@ du backend, pour que les deux ne se contredisent pas.
 | 2 | `ATTENTION` | `hr > 100` |
 | 1 | `INFORMATION` | `50 <= hr < 58` |
 
-### Incohérence relevée dans le projet Digi4
+### Incohérence relevée dans le projet Digi4, puis corrigée
 
-Le libellé d'activité d'une chute ne concorde pas d'un bout à l'autre de la chaîne :
+Le libellé d'activité d'une chute ne concordait pas d'un bout à l'autre de la chaîne :
 
-| Fichier | Valeur |
-| --- | --- |
-| `simulator/app/sensors/motion.py:36` | `activity="falling"` |
-| `backend/app/alerts/rules.py:31` | teste `activity == "fall"` |
-| `frontend/src/components/ResidentCard.tsx:28` | teste `activity === "fall_detected"` |
+| Fichier | Valeur d'origine | Effet |
+| --- | --- | --- |
+| `simulator/app/sensors/motion.py` | `activity="falling"` | producteur |
+| `backend/app/alerts/rules.py` | teste `activity == "fall"` | ne matchait jamais |
+| `frontend/.../ResidentCard.tsx` | teste `activity === "fall_detected"` | ne matchait jamais |
 
-Les trois diffèrent : **une chute du simulateur ne déclenche jamais la règle L4**, et le
-dashboard n'affiche jamais l'état de chute. Le test `backend/tests/test_rules.py:45` passe
+Les trois diffèrent : **une chute du simulateur ne déclenchait jamais la règle L4**, et le
+dashboard n'affichait jamais l'état de chute. Le test `backend/tests/test_rules.py` passait
 parce qu'il écrit `"fall"` en dur — il valide la règle, pas la chaîne.
 
-Le firmware publie `"fall"`, qui est la valeur attendue par la règle vivante. La correction
-du simulateur et du frontend reste à faire côté Digi4.
+Arbitrage : `"fall"` gagne, parce que c'est la valeur que teste le moteur d'alertes, donc
+celle dont dépend le comportement observable. Corrections appliquées :
 
-## 6. Ce qui reste à faire (étapes 3, 4 et 5 du TP, reportées)
+- le simulateur émet `"fall"` (`sensors/motion.py`, `scenarios.py`, et son test) ;
+- le firmware émet `"fall"` ;
+- le frontend accepte les trois orthographes via `isFallActivity()` dans `lib/format.ts`,
+  le temps que d'anciens points d'historique InfluxDB finissent d'expirer.
 
-- [ ] Vérifier le flux dans MQTT Explorer sur `digi5/<equipe>/ehpad/#` (étape 3)
+## 6. Comment la carte atteint le dashboard
+
+La carte simulée dans Wokwi ne peut pas joindre le Mosquitto qui tourne en local. Elle
+publie donc sur `broker.hivemq.com`, et **un pont Mosquitto** rapatrie ses messages en
+leur rendant leur topic Digi4 (`mosquitto/config/mosquitto.conf`) :
+
+```
+topic vitals/resident/+ in 0 ehpad/ digi5/equipe-ehpad/ehpad/
+topic motion/resident/+ in 0 ehpad/ digi5/equipe-ehpad/ehpad/
+topic alerts/new        in 0 ehpad/ digi5/equipe-ehpad/ehpad/
+```
+
+```
+ESP32 (Wokwi)                     broker.hivemq.com
+  digi5/equipe-ehpad/ehpad/...  ────────┐
+                                        │  pont Mosquitto, sens « in » uniquement
+  ehpad/vitals/resident/R021  ◄─────────┘
+        │
+        └─► backend ─► Redis / Influx ─► alertes + ML ─► ws-gateway ─► dashboard
+```
+
+Pourquoi cette solution plutôt que celle de l'énoncé (brancher MQTT.js du front
+directement sur HiveMQ en WebSocket) : ici **rien ne change dans le code**. Le backend, le
+moteur d'alertes, l'escalade, le ML et le dashboard continuent de voir un producteur sur
+`ehpad/...`, exactement comme le simulateur. La carte bénéficie donc de toute la chaîne,
+pas seulement d'une courbe. C'est aussi ce que démontre l'architecture Digi4 : *le
+simulateur se remplace par de vrais capteurs sans toucher au backend*.
+
+Le pont est **unidirectionnel** (`in`) : aucun état de résident, aucune alerte, aucun score
+de risque ne part vers le broker public.
+
+### Résident R021
+
+La carte alimente **R021**, hors de la plage du simulateur Python (R001 à R020). Les deux
+sources ne peuvent donc pas se contredire sur un même résident, et le dashboard montre les
+vingt résidents simulés **plus** celui qui porte le capteur réel. Son profil est déclaré
+dans `backend/app/profiles.py`, chambre 121.
+
+### Qui émet quelle alerte
+
+Le backend reçoit les `vitals` et le `motion` de la carte et les évalue avec ses propres
+règles. Republier depuis le device les alertes de FC et de chute les ferait donc apparaître
+**deux fois** dans le dashboard. Répartition retenue :
+
+| Événement | Évalué sur le device | Publié sur MQTT par le device | Alerte dashboard |
+| --- | --- | --- | --- |
+| FC hors seuils | oui (buzzer + série) | non | par le backend, depuis les vitals |
+| Chute | oui (buzzer + série) | non | par le backend, depuis `activity == "fall"` |
+| Bouton SOS | oui | **oui**, `alerts/new` niveau 5 | depuis le device |
+
+Le SOS est le seul événement qu'aucune mesure ne trahit : il n'existe nulle part dans
+`rules.py`, donc le device est le seul à pouvoir le signaler. L'évaluation embarquée reste
+entière pour ce qu'elle sert vraiment : réagir sans réseau, immédiatement, avec le buzzer.
+
+## 7. Ce qui reste à faire
+
+- [ ] Vérifier le flux dans MQTT Explorer sur `digi5/<equipe>/ehpad/#` (étape 3 du TP)
 - [ ] Tester potentiomètre, MPU-6050 et bouton SOS un par un (étape 4)
-- [ ] Brancher le dashboard sur `wss://broker.hivemq.com:8884/mqtt` (étape 5) — soit en
-      pointant le `ws-gateway` sur HiveMQ au lieu du Mosquitto local, soit en connectant
-      MQTT.js directement depuis le front
-- [ ] Rendre `VitalsValues` tolérant aux champs non mesurés (section 4)
-- [ ] Trancher le libellé de chute entre `falling`, `fall` et `fall_detected` (section 5)
+- [ ] Faire entrer le SOS dans `AlertStore` pour qu'il soit acquittable et historisé :
+      aujourd'hui il traverse le ws-gateway et s'affiche, mais le backend ne le connaît pas
+- [ ] Passer en TLS sur un cluster HiveMQ Cloud (`USE_TLS 1`, étape 10)
+- [ ] Remplacer le potentiomètre par un MAX30102 le 30 octobre
+
+### Anomalie préexistante, non corrigée
+
+`backend/tests/test_escalation.py::test_demo_mode_compresses_delays` échoue : le test attend
+`DEMO_DELAYS[2] == 60`, le code déclare `300.0` (`backend/app/alerts/escalation.py`). Sans
+trace de l'intention d'origine, corriger au hasard changerait le rythme d'escalade en démo.
+Signalé, laissé en l'état. Le reste de la suite passe : 58 tests backend, 6 simulateur.

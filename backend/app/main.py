@@ -18,6 +18,7 @@ from .alerts.engine import AlertEngine
 from .alerts.escalation import EscalationManager
 from .alerts.publisher import AlertPublisher
 from .ml.bootstrap import train_model
+from .profiles import PROFILES
 from .ml.risk import RiskPublisher
 
 
@@ -63,7 +64,7 @@ async def lifespan(app: FastAPI):
     _engine_task = asyncio.create_task(_engine.loop(_cache, interval=1.0))
 
     def _bootstrap_all_models():
-        rids = [f"R{n:03d}" for n in range(1, 21)]
+        rids = list(PROFILES.keys())  # 20 résidents simulés + R021, la carte ESP32
         for rid in rids:
             train_model(rid, settings.models_dir, days=7, force=False)
 
