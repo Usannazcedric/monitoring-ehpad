@@ -13,9 +13,10 @@ Le contrat complet (topics, formats, seuils, validation Pydantic) est dans
 
 ## Lien du projet Wokwi
 
-**→ `COLLER ICI LE LIEN wokwi.com DU PROJET`**
+> **→ `COLLER ICI LE LIEN wokwi.com DU PROJET`**
 
-(Dans Wokwi : *Save* puis *Share* → copier l'URL publique.)
+Dans Wokwi : **Save**, puis **Share** → copier l'URL publique.
+Le projet doit rester accessible sans compte.
 
 ---
 
@@ -50,8 +51,21 @@ jamais en 5 V.
 2. Onglet `diagram.json` : remplacer tout le contenu par celui de [`diagram.json`](diagram.json).
 3. Onglet `libraries.txt` (le créer s'il n'existe pas) : coller [`libraries.txt`](libraries.txt).
 4. Onglet `sketch.ino` : coller [`sketch.ino`](sketch.ino).
-5. ▶ *Start the simulation*. Le moniteur série (115200 bauds) affiche les topics, puis
-   `Wi-Fi OK`, `MQTT OK`, et une ligne `PUB vitals` toutes les 2 secondes.
+5. ▶ *Start the simulation*. Le moniteur série (115200 bauds) doit afficher :
+
+```
+MPU-6050 detecte (0x68)
+Topics :
+  vitals : digi5/equipe-ehpad/ehpad/vitals/resident/R021
+  ...
+Wi-Fi OK, IP = 10.13.37.2
+NTP : synchronisation... OK
+MQTT : connexion a broker.hivemq.com:1883 ... OK
+[PUB vitals] {"timestamp":"...","resident_id":"R021","values":{"hr":78},...}
+```
+
+puis une ligne `PUB vitals` toutes les 2 secondes. Tourner le potentiomètre fait bouger
+`hr` ; l'appui sur le bouton rouge écrit `[ALERTE publiee L5]` et déclenche le buzzer.
 
 Au besoin, changer `TEAM_ID` en haut de `sketch.ino` : c'est la **seule** valeur à adapter.
 
@@ -128,13 +142,48 @@ ne mesure pas : ils restent inatteignables depuis le device, hors bouton SOS.
 
 ---
 
+## Vérifier que la chaîne fonctionne
+
+Sans rien installer : les deux commandes ci-dessous lisent le flux là où il passe.
+La stack doit tourner (`docker compose up -d` à la racine).
+
+Ce que la carte envoie au broker public :
+
+```bash
+docker exec ehpad-mosquitto mosquitto_sub -h broker.hivemq.com \
+  -t 'digi5/equipe-ehpad/ehpad/#' -v
+```
+
+Ce que le pont dépose sur le broker local, sous son nom Digi4 :
+
+```bash
+docker exec ehpad-mosquitto mosquitto_sub -h localhost \
+  -t 'ehpad/vitals/resident/R021' -v
+```
+
+Et ce que le backend en a fait — les constantes non mesurées doivent valoir `null`,
+jamais `0` :
+
+```bash
+curl -s http://localhost:8000/residents/R021 | python3 -m json.tool
+```
+
+---
+
 ## Captures
+
+Enregistrer les fichiers dans `docs/` sous ces noms exacts : les liens ci-dessous
+les affichent dès qu'ils existent.
 
 | Capture | Fichier |
 | --- | --- |
 | Montage Wokwi en cours de simulation | `docs/wokwi-simulation.png` |
-| Moniteur série (publications MQTT) | `docs/serial-monitor.png` |
-| Dashboard recevant la donnée | `docs/dashboard.png` |
+| Moniteur série (lignes `PUB vitals`) | `docs/serial-monitor.png` |
+| Dashboard affichant R021 | `docs/dashboard.png` |
+
+![Montage Wokwi](docs/wokwi-simulation.png)
+![Moniteur série](docs/serial-monitor.png)
+![Dashboard](docs/dashboard.png)
 
 ---
 
