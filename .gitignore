@@ -34,3 +34,7 @@ models/
 
 # Logs
 *.log
+
+# Compilation locale du firmware (Wokwi for VS Code)
+firmware/m1_wokwi/build/
+firmware/m1_wokwi/.build/

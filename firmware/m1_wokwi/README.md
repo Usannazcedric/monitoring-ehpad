@@ -27,6 +27,8 @@ Le projet doit rester accessible sans compte.
 | [`diagram.json`](diagram.json) | Le montage : ESP32 + MPU-6050 + bouton SOS + buzzer + potentiomètre |
 | [`libraries.txt`](libraries.txt) | Une seule dépendance : `PubSubClient`, à ajouter via le Library Manager |
 | [`sketch.ino`](sketch.ino) | Le firmware |
+| [`wokwi.toml`](wokwi.toml) | Configuration de l'extension VS Code : où trouver le binaire compilé |
+| [`build.sh`](build.sh) | Compilation locale via `arduino-cli`, pour contourner la file d'attente Wokwi |
 
 ---
 
@@ -72,6 +74,54 @@ puis une ligne `PUB vitals` toutes les 2 secondes. Tourner le potentiomètre fai
 `hr` ; l'appui sur le bouton rouge écrit `[ALERTE publiee L5]` et déclenche le buzzer.
 
 Au besoin, changer `TEAM_ID` en haut de `sketch.ino` : c'est la **seule** valeur à adapter.
+
+---
+
+## Si Wokwi affiche « Build Servers Busy »
+
+Les serveurs de compilation de wokwi.com sont mutualisés, et le plan gratuit passe
+derrière les plans payants dans la file. Aux heures chargées la compilation n'aboutit
+pas, quel que soit le code.
+
+La parade est de **compiler sur sa machine et de simuler en local**, avec l'extension
+*Wokwi for VS Code*. Le simulateur est le même ; seule la compilation change de côté.
+
+### Installation (une fois)
+
+```bash
+brew install arduino-cli
+arduino-cli config init
+arduino-cli config add board_manager.additional_urls \
+  https://espressif.github.io/arduino-esp32/package_esp32_index.json
+arduino-cli core update-index
+arduino-cli core install esp32:esp32     # ~1,5 Go, comptez quelques minutes
+arduino-cli lib install PubSubClient
+
+code --install-extension wokwi.wokwi-vscode
+```
+
+Puis une licence, gratuite pour un usage non commercial : dans VS Code,
+`Cmd+Shift+P` → **Wokwi: Request a New License**. Le navigateur s'ouvre, on se
+connecte, VS Code récupère le jeton tout seul. La licence dure 30 jours et se
+renouvelle de la même façon.
+
+### À chaque fois
+
+```bash
+./build.sh
+```
+
+Le script recopie `sketch.ino` dans un dossier temporaire — `arduino-cli` exige que
+le fichier principal porte le nom de son dossier, alors que wokwi.com impose le nom
+`sketch.ino` — puis compile vers `build/`. [`wokwi.toml`](wokwi.toml) pointe vers
+cette sortie.
+
+Ensuite, dans VS Code ouvert sur ce dossier : `Cmd+Shift+P` →
+**Wokwi: Start Simulator**. Le montage de [`diagram.json`](diagram.json) s'affiche,
+avec le moniteur série, le potentiomètre et le bouton SOS, exactement comme sur le site.
+
+La première compilation prend une minute environ ; les suivantes quelques secondes,
+`arduino-cli` gardant son cache.
 
 ---
 
