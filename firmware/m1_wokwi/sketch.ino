@@ -17,6 +17,8 @@
 #include <WiFiClientSecure.h>
 #include <Wire.h>
 #include <time.h>
+#include <sys/time.h>
+#include <esp_random.h>
 #include <PubSubClient.h>
 
 // ======================= 1. CONFIGURATION A ADAPTER =======================
@@ -121,7 +123,7 @@ void mpuReadAccel() {
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x3B);
   Wire.endTransmission(false);
-  Wire.requestFrom(MPU_ADDR, (uint8_t)6);
+  Wire.requestFrom((int)MPU_ADDR, 6);
   int16_t rx = (Wire.read() << 8) | Wire.read();
   int16_t ry = (Wire.read() << 8) | Wire.read();
   int16_t rz = (Wire.read() << 8) | Wire.read();
@@ -203,6 +205,17 @@ void connectWifi() {
   }
   Serial.printf("\nWi-Fi OK, IP = %s\n", WiFi.localIP().toString().c_str());
   configTime(0, 0, "pool.ntp.org", "time.google.com");
+
+  // Le backend parse "timestamp" en datetime : sans heure NTP, isoTimestamp()
+  // rend une chaine vide et le message est rejete. On attend la synchro, 10 s au
+  // plus pour ne pas bloquer la demo si le NTP est injoignable.
+  Serial.print("NTP : synchronisation");
+  unsigned long deadline = millis() + 10000;
+  while (time(nullptr) < 1700000000 && millis() < deadline) {
+    delay(200);
+    Serial.print(".");
+  }
+  Serial.println(time(nullptr) < 1700000000 ? " echec (horodatage indisponible)" : " OK");
 }
 
 bool connectMqtt() {
