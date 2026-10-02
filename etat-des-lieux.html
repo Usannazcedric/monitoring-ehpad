@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitoring EHPAD — Architecture et écarts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground: #F1F4F4;
+    --surface: #FFFFFF;
+    --surface-sunk: #E7EDED;
+    --ink: #16242A;
+    --ink-soft: #4C6069;
+    --ink-faint: #7B8E95;
+    --rule: #D3DCDC;
+    --rule-strong: #B6C5C5;
+    --accent: #0E6E72;
+    --sev-1: #A3261F;
+    --sev-1-bg: #F6E4E2;
+    --sev-2: #9C5A12;
+    --sev-2-bg: #F7EADA;
+    --sev-3: #4C6069;
+    --sev-3-bg: #E6ECEE;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1618;
+      --surface: #152124;
+      --surface-sunk: #101A1D;
+      --ink: #E7EEEC;
+      --ink-soft: #A3B6B9;
+      --ink-faint: #778C90;
+      --rule: #27383C;
+      --rule-strong: #3A4E52;
+      --accent: #5FBDBF;
+      --sev-1: #F08A80;
+      --sev-1-bg: #32191A;
+      --sev-2: #E0A95E;
+      --sev-2-bg: #2E2317;
+      --sev-3: #9FB2B6;
+      --sev-3-bg: #1B262A;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Sans 3", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 48px 26px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 52px;
+  }
+
+  h1, h2 {
+    font-family: "Zilla Slab", Georgia, "Times New Roman", serif;
+    font-weight: 600;
+    text-wrap: balance;
+    margin: 0;
+    letter-spacing: -.01em;
+  }
+
+  h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); line-height: 1.1; }
+  h2 { font-size: 1.4rem; line-height: 1.2; }
+
+  p { margin: 0; max-width: 70ch; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .7rem;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .86em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .06em .32em;
+  }
+
+  header { display: flex; flex-direction: column; gap: 14px; }
+
+  .lede { font-size: 1.08rem; color: var(--ink-soft); max-width: 66ch; }
+
+  .meta {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .74rem;
+    color: var(--ink-faint);
+    border-top: 1px solid var(--rule);
+    padding-top: 12px;
+  }
+
+  section { display: flex; flex-direction: column; gap: 16px; }
+
+  .section-head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 12px;
+  }
+
+  /* ---------- diagramme : couches empilées, zéro JS ---------- */
+
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .layer {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    gap: 18px;
+    align-items: center;
+  }
+
+  .layer-label {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .62rem;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    text-align: right;
+    line-height: 1.35;
+  }
+
+  .boxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .box {
+    flex: 1 1 150px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    background: var(--surface);
+    padding: 11px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .box-name {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .82rem;
+    font-weight: 500;
+  }
+
+  .box-role { font-size: .78rem; color: var(--ink-soft); line-height: 1.35; }
+
+  .box.bus {
+    border-color: var(--accent);
+    border-width: 2px;
+    background: var(--surface-sunk);
+  }
+
+  .box.sim { border-style: dashed; }
+
+  .flow {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    gap: 18px;
+    align-items: center;
+    padding: 7px 0;
+  }
+
+  .flow-arrow {
+    text-align: right;
+    color: var(--rule-strong);
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .flow-text {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .68rem;
+    color: var(--ink-faint);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .flow-text::before {
+    content: "";
+    width: 1px;
+    height: 26px;
+    background: var(--rule-strong);
+    flex: 0 0 auto;
+    margin-left: 13px;
+  }
+
+  .backflows {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--rule-strong);
+    display: grid;
+    gap: 6px;
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .68rem;
+    color: var(--ink-faint);
+  }
+
+  .caption { font-size: .86rem; color: var(--ink-faint); max-width: 72ch; }
+
+  /* ---------- tableau ---------- */
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--surface);
+  }
+
+  table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: .93rem; }
+
+  thead th {
+    text-align: left;
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .66rem;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule-strong);
+    background: var(--surface-sunk);
+    white-space: nowrap;
+  }
+
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  td.id {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .8rem;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  td.what strong { display: block; font-weight: 600; }
+  td.what span { color: var(--ink-soft); font-size: .9rem; }
+  td.cote { white-space: nowrap; }
+
+  .pill {
+    display: inline-block;
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .64rem;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+  }
+
+  .pill[data-crit="bloquant"] { color: var(--sev-1); background: var(--sev-1-bg); border-color: var(--sev-1); }
+  .pill[data-crit="majeur"]   { color: var(--sev-2); background: var(--sev-2-bg); border-color: var(--sev-2); }
+  .pill[data-crit="mineur"]   { color: var(--sev-3); background: var(--sev-3-bg); border-color: var(--sev-3); }
+
+  .eff { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; font-size: .78rem; color: var(--ink-soft); }
+
+  .scales {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-size: .82rem;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .note {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .note strong { color: var(--ink); }
+  .note p { max-width: 74ch; }
+
+  ol.next { margin: 0; padding-left: 22px; display: grid; gap: 6px; color: var(--ink-soft); font-size: .95rem; }
+  ol.next strong { color: var(--ink); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+    font-size: .82rem;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 620px) {
+    .layer, .flow { grid-template-columns: 1fr; gap: 8px; }
+    .layer-label, .flow-arrow { text-align: left; }
+    .flow-text::before { display: none; }
+  }
+
+  /* ---------- impression / PDF ---------- */
+
+  @page { size: A4; margin: 14mm 13mm; }
+
+  @media print {
+    :root {
+      --ground: #FFFFFF;
+      --surface: #FFFFFF;
+      --surface-sunk: #F0F4F4;
+    }
+    html, body {
+      background: #FFFFFF;
+      font-size: 10.5pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .wrap { max-width: none; padding: 0; gap: 26px; }
+    h1 { font-size: 21pt; }
+    h2 { font-size: 13pt; }
+    .lede { font-size: 11pt; }
+    /* jamais sur `section` : un bloc plus haut qu'une page serait
+       repoussé entier et laisserait une page quasi vide derrière lui. */
+    .diagram, .note, .table-scroll { break-inside: avoid; }
+    tr, .layer, .flow, .box, .section-head { break-inside: avoid; }
+    .section-head { break-after: avoid; }
+    h1, h2 { break-after: avoid; }
+    .table-scroll { overflow: visible; }
+    table { min-width: 0; }
+    footer { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <span class="eyebrow">Projet 2 · IoT Santé · État des lieux</span>
+    <h1>Monitoring EHPAD : architecture et écarts</h1>
+    <p class="lede">
+      Surveillance temps réel de 20 résidents : capteurs simulés, ingestion MQTT, scoring ML,
+      alertes à cinq niveaux avec auto-escalade, détection de fugue, résumé quotidien par LLM local.
+      Voici l'architecture telle qu'elle est, puis ce qui manque pour en faire un produit utilisable
+      dans un établissement.
+    </p>
+    <p class="meta">9 services Docker · ~4 700 lignes · 59 tests backend, 0 côté front · 74 commits, avril 2026</p>
+  </header>
+
+  <!-- ============ 01 ARCHITECTURE ============ -->
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">01</span>
+      <h2>Architecture</h2>
+    </div>
+
+    <div class="diagram">
+
+      <div class="layer">
+        <div class="layer-label">Capteurs<br>simulés</div>
+        <div class="boxes">
+          <div class="box sim">
+            <span class="box-name">Simulateur FastAPI</span>
+            <span class="box-role">20 profils résidents, scénarios injectables (chute, cardiaque, fugue, dégradation)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-arrow">▼</div>
+        <div class="flow-text">vitals 1 Hz · motion 5 Hz · ambiance et portes 0,2 Hz</div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-label">Bus<br>temps réel</div>
+        <div class="boxes">
+          <div class="box bus">
+            <span class="box-name">Mosquitto · MQTT</span>
+            <span class="box-role">Broker. Découple le producteur de données du backend et de l'interface</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-arrow">▼</div>
+        <div class="flow-text">souscription ehpad/+/+/+</div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-label">Traitement</div>
+        <div class="boxes">
+          <div class="box">
+            <span class="box-name">Backend FastAPI</span>
+            <span class="box-role">Ingestion, règles d'alerte, auto-escalade, scoring ML, client LLM, API REST</span>
+          </div>
+          <div class="box">
+            <span class="box-name">ws-gateway · Node</span>
+            <span class="box-role">Rediffuse les topics MQTT aux clients WebSocket</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-arrow">▼</div>
+        <div class="flow-text">écritures du backend · WebSocket vers le navigateur</div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-label">Persistance</div>
+        <div class="boxes">
+          <div class="box">
+            <span class="box-name">Redis</span>
+            <span class="box-role">État courant, TTL 60 s. Fenêtre ML glissante</span>
+          </div>
+          <div class="box">
+            <span class="box-name">InfluxDB</span>
+            <span class="box-role">Séries temporelles, rétention 30 jours</span>
+          </div>
+          <div class="box">
+            <span class="box-name">Ollama</span>
+            <span class="box-role">LLM local, résumés quotidiens</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-arrow">▼</div>
+        <div class="flow-text">lecture via l'API REST</div>
+      </div>
+
+      <div class="layer">
+        <div class="layer-label">Restitution</div>
+        <div class="boxes">
+          <div class="box">
+            <span class="box-name">Frontend React + nginx</span>
+            <span class="box-role">Grille des résidents, détail et graphiques, journal d'alertes, plan de l'étage, personnel</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="backflows">
+        <div>↑ le backend republie l'état mergé, les alertes et les scores sur MQTT — il ne pousse rien directement à l'interface</div>
+        <div>↑ le navigateur ne parle qu'à nginx : /api vers le backend, /sim vers le simulateur, /ws vers la passerelle</div>
+      </div>
+
+    </div>
+
+    <p class="caption">
+      MQTT fait la colonne vertébrale : le simulateur se remplace par de vrais capteurs sans toucher au backend.
+      Une seule origine côté navigateur, d'où l'absence de configuration CORS dans le code.
+      Les neuf services démarrent par un unique <code>docker compose up</code>.
+    </p>
+  </section>
+
+  <!-- ============ 02 ÉCARTS ============ -->
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">02</span>
+      <h2>Écarts avec un produit fini</h2>
+      <p>Dix points manquants, cotés en criticité et en effort.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th></th><th>Écart</th><th>Criticité</th><th>Effort</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">É1</td>
+            <td class="what"><strong>Aucun capteur réel</strong><span>Toute la donnée vient du simulateur. Aucun pilote BLE ou LoRa, pas d'appairage, pas de gestion de batterie ni de perte de lien.</span></td>
+            <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
+            <td class="eff">Élevé</td>
+          </tr>
+          <tr>
+            <td class="id">É2</td>
+            <td class="what"><strong>L'alerte ne sort pas du navigateur</strong><span>Un toast dans l'onglet ouvert, rien d'autre. La nuit, personne devant l'écran : il faut du SMS, du push ou le bip de l'établissement.</span></td>
+            <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
+            <td class="eff">Moyen</td>
+          </tr>
+          <tr>
+            <td class="id">É3</td>
+            <td class="what"><strong>Aucune authentification</strong><span>Toutes les routes sont ouvertes. N'importe qui lit les constantes des 20 résidents et peut acquitter — donc éteindre — une alerte vitale.</span></td>
+            <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
+            <td class="eff">Moyen</td>
+          </tr>
+          <tr>
+            <td class="id">É4</td>
+            <td class="what"><strong>MQTT anonyme, aucun TLS</strong><span><code>allow_anonymous true</code> et zéro chiffrement. Un faux client peut injecter de fausses constantes.</span></td>
+            <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
+            <td class="eff">Moyen</td>
+          </tr>
+          <tr>
+            <td class="id">É5</td>
+            <td class="what"><strong>Résidents et personnel codés en dur</strong><span>Déclarés en Python. Admettre un résident ou le changer de chambre demande un redéploiement.</span></td>
+            <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
+            <td class="eff">Moyen</td>
+          </tr>
+          <tr>
+            <td class="id">É6</td>
+            <td class="what"><strong>ML entraîné sur nos propres données simulées</strong><span>Le modèle apprend le simulateur, pas la physiologie. Aucune mesure de faux positifs, donc rien de démontrable sur la détection.</span></td>
+            <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
+            <td class="eff">Élevé</td>
+          </tr>
+          <tr>
+            <td class="id">É7</td>
+            <td class="what"><strong>Un seul backend, escalades en mémoire</strong><span>S'il redémarre, les escalades en cours disparaissent sans bruit : une alerte non acquittée ne montera jamais.</span></td>
+            <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
+            <td class="eff">Élevé</td>
+          </tr>
+          <tr>
+            <td class="id">É8</td>
+            <td class="what"><strong>Données éphémères, aucune sauvegarde</strong><span>Volumes Docker locaux, rétention Influx de 30 jours. Aucune trace de qui a acquitté quelle alerte.</span></td>
+            <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
+            <td class="eff">Moyen</td>
+          </tr>
+          <tr>
+            <td class="id">É9</td>
+            <td class="what"><strong>Hébergement non HDS</strong><span>Des données de santé nominatives imposent un hébergeur certifié HDS. Chantier d'organisation, pas de code.</span></td>
+            <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
+            <td class="eff">Hors dev</td>
+          </tr>
+          <tr>
+            <td class="id">É10</td>
+            <td class="what"><strong>Pas de CI, aucun test front</strong><span>59 tests backend solides, mais rien sur React ni sur la chaîne capteur → alerte → écran, et rien ne s'exécute automatiquement.</span></td>
+            <td class="cote"><span class="pill" data-crit="mineur">Mineur</span></td>
+            <td class="eff">Faible</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="scales">
+      <span>Bloquant = empêche la mise en service</span>
+      <span>Majeur = exploitation dégradée</span>
+      <span>Mineur = dette acceptable</span>
+      <span>Faible ≤ 2 j · Moyen 3–8 j · Élevé &gt; 8 j</span>
+    </div>
+  </section>
+
+  <!-- ============ 03 LECTURE ============ -->
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">03</span>
+      <h2>Ce qu'il faut en retenir</h2>
+    </div>
+
+    <div class="note">
+      <p>
+        <strong>La chaîne fonctionne de bout en bout</strong> : un capteur publie, l'alerte arrive à l'écran
+        en moins de deux secondes, l'escalade s'enclenche seule, le ML anticipe une dégradation.
+        Comme démonstrateur, c'est complet.
+      </p>
+      <p>
+        <strong>Ce qui manque n'est presque jamais une fonctionnalité.</strong> Ce sont les capteurs physiques,
+        une identité derrière chaque geste, et une alerte qui franchit les limites du navigateur.
+        Tant que ces trois-là manquent, un établissement ne peut pas brancher le système.
+      </p>
+    </div>
+
+    <ol class="next">
+      <li><strong>D'abord</strong> — É2 et É3 : faire sortir l'alerte de l'écran, et savoir qui l'acquitte.</li>
+      <li><strong>Ensuite</strong> — É4, É5, É8 : chiffrement, référentiels en base, sauvegardes.</li>
+      <li><strong>Enfin</strong> — É1 et É6 : vrais capteurs et validation du modèle, les deux gros chantiers.</li>
+    </ol>
+  </section>
+
+  <footer>
+    Projet 2 — IoT Santé · Titouan Brunet, Cedric Usannaz et Fares Mansour · dépôt au 30 avril 2026
+  </footer>
+
+</div>
+
+</body>
+</html>
