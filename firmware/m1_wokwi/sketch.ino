@@ -14,6 +14,7 @@
   broker.hivemq.com est public : n'y publier aucune donnee reelle.
 */
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <Wire.h>
 #include <time.h>
 #include <sys/time.h>
@@ -41,7 +42,6 @@ const char* ROOM_ID     = "121";
 const char* DEVICE_ID   = "esp32-01";
 
 #if USE_TLS
-#include <WiFiClientSecure.h>   // inclus seulement en TLS : mbedTLS alourdit la compilation
 const char*    MQTT_HOST = "VOTRE-CLUSTER.s1.eu.hivemq.cloud";
 const uint16_t MQTT_PORT = 8883;
 const char*    MQTT_USER = "UTILISATEUR_TP";   // placeholder : jamais de vrai secret dans Git
