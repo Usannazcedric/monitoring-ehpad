@@ -247,12 +247,36 @@ Les captures ci-dessous en sont extraites.
 | Dashboard : FC de R021 issue du firmware | [`docs/dashboard.png`](docs/dashboard.png) |
 | Montage Wokwi au moment du SOS (buzzer actif) | [`docs/wokwi-simulation.png`](docs/wokwi-simulation.png) |
 | Moniteur série : `PUB vitals` et `ALERTE publiee L5` | [`docs/serial-monitor.png`](docs/serial-monitor.png) |
+| Client MQTT abonné au broker public | [`docs/mqtt-client.png`](docs/mqtt-client.png) |
 
 ![Dashboard affichant la FC de R021 issue du firmware](docs/dashboard.png)
 
 ![Montage Wokwi au moment de l'appui SOS](docs/wokwi-simulation.png)
 
 ![Moniteur série : messages publiés par la carte](docs/serial-monitor.png)
+
+---
+
+## Les messages vus depuis un client MQTT
+
+Capture prise depuis le [client web HiveMQ](https://www.hivemq.com/demos/websocket-client/),
+abonné à `digi5/equipe-ehpad/ehpad/#` sur `broker.hivemq.com`. Contrairement au moniteur
+série, ce client est **extérieur à la carte** : il prouve que les messages transitent
+réellement par le broker.
+
+![Messages reçus par un client MQTT abonné au broker public](docs/mqtt-client.png)
+
+Les quatre messages se lisent de bas en haut, dans l'ordre chronologique :
+
+| Horodatage | Topic | Contenu | Ce que ça montre |
+| --- | --- | --- | --- |
+| 16:53:43 | `device/esp32-01/status` | `{"state":"offline",...}` — **retenu** | Le **Last Will** : le broker a publié ce message tout seul quand la carte a disparu sans se déconnecter proprement. |
+| 16:53:51 | `device/esp32-01/status` | `{"state":"online",...}` | La carte se reconnecte et écrase l'état précédent. |
+| 16:53:51 | `vitals/resident/R021` | `{"hr":55,...,"measured":["hr"]}` | Seule `hr` est mesurée, et le champ `measured` le dit explicitement. |
+| 16:53:51 | `motion/resident/R021` | `{"az":9.807,"activity":"sitting",...}` | L'accélération est en **m/s²**, pas en g : `az ≈ 9,807` au repos, comme l'attend le backend Digi4. |
+
+Le `seq:0` des deux derniers confirme qu'il s'agit bien du premier cycle après
+redémarrage de la simulation.
 
 ---
 
