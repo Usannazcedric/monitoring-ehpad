@@ -224,20 +224,35 @@ curl -s http://localhost:8000/residents/R021 | python3 -m json.tool
 
 ---
 
-## Captures
+## Démonstration
 
-Enregistrer les fichiers dans `docs/` sous ces noms exacts : les liens ci-dessous
-les affichent dès qu'ils existent.
+**[`docs/demo-chaine-complete.mp4`](docs/demo-chaine-complete.mp4)** — 39 s.
+Dashboard à gauche, simulateur Wokwi et moniteur série à droite.
+
+On y voit, dans l'ordre :
+
+1. La fiche du résident R021 sur le dashboard, alimentée par la carte : la fréquence
+   cardiaque suit le potentiomètre, les champs non mesurés (SpO₂, tension, température)
+   restent vides — le firmware ne publie que `hr`.
+2. L'appui sur le bouton SOS. Le moniteur série affiche `[ALERTE publiee L5]` avec le
+   JSON complet, le buzzer se déclenche.
+3. La même alerte sur le dashboard en moins d'une seconde : bandeau *Danger vital —
+   R021, appel SOS du resident*, compteur d'alertes qui passe de 19 à 20, soignant
+   notifié.
+
+Les captures ci-dessous en sont extraites.
 
 | Capture | Fichier |
 | --- | --- |
-| Montage Wokwi en cours de simulation | `docs/wokwi-simulation.png` |
-| Moniteur série (lignes `PUB vitals`) | `docs/serial-monitor.png` |
-| Dashboard affichant R021 | `docs/dashboard.png` |
+| Dashboard : FC de R021 issue du firmware | [`docs/dashboard.png`](docs/dashboard.png) |
+| Montage Wokwi au moment du SOS (buzzer actif) | [`docs/wokwi-simulation.png`](docs/wokwi-simulation.png) |
+| Moniteur série : `PUB vitals` et `ALERTE publiee L5` | [`docs/serial-monitor.png`](docs/serial-monitor.png) |
 
-![Montage Wokwi](docs/wokwi-simulation.png)
-![Moniteur série](docs/serial-monitor.png)
-![Dashboard](docs/dashboard.png)
+![Dashboard affichant la FC de R021 issue du firmware](docs/dashboard.png)
+
+![Montage Wokwi au moment de l'appui SOS](docs/wokwi-simulation.png)
+
+![Moniteur série : messages publiés par la carte](docs/serial-monitor.png)
 
 ---
 

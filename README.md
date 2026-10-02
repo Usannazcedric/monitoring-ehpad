@@ -17,6 +17,7 @@ Ce dépôt **continue** le projet de l'an dernier (Digi4), archivé tel quel sur
 | Contrat MQTT — correspondance Digi4 → Digi5 | [`docs/contrat_mqtt.md`](docs/contrat_mqtt.md) |
 | Module 1 — firmware ESP32 qui remplace le simulateur Python | [`firmware/m1_wokwi/`](firmware/m1_wokwi/) |
 | Simulation Wokwi de la carte | [wokwi.com/projects/476778339332099073](https://wokwi.com/projects/476778339332099073) |
+| Démonstration vidéo — carte ESP32 → dashboard (39 s) | [`firmware/m1_wokwi/docs/demo-chaine-complete.mp4`](firmware/m1_wokwi/docs/demo-chaine-complete.mp4) |
 
 Le firmware ESP32 publie sur les **mêmes topics et les mêmes formats JSON** que le
 simulateur Python : le backend, le moteur d'alertes et le dashboard décrits ci-dessous
@@ -220,7 +221,8 @@ curl -X POST http://localhost:9100/scenario/R002 \
 │       ├── libraries.txt
 │       ├── sketch.ino
 │       ├── wokwi.toml    # simulation locale via l'extension Wokwi for VS Code
-│       └── build.sh      # compilation locale (arduino-cli), contourne la file Wokwi
+│       ├── build.sh      # compilation locale (arduino-cli), contourne la file Wokwi
+│       └── docs/         # démonstration vidéo et captures d'écran
 ├── docker-compose.yml
 ├── docs/
 │   ├── architecture.md   # Documentation technique détaillée
