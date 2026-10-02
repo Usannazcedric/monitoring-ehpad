@@ -265,7 +265,36 @@
     font-size: .8rem;
     color: var(--ink-faint);
     white-space: nowrap;
+    width: 116px;
   }
+
+  thead th:first-child { width: 116px; }
+
+  td.id .dim {
+    display: block;
+    margin-top: 5px;
+    font-family: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--accent);
+    white-space: normal;
+    /* « Interopérabilité » ne contient aucune espace. `break-word` ne le coupe
+       que s'il ne tient pas seul sur la ligne ; `anywhere` compterait dans la
+       largeur minimale de la colonne et réduirait tous les libellés à une
+       lettre par ligne. */
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .srclink {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .78rem;
+    color: var(--ink-faint);
+    word-break: break-all;
+  }
+  .srclink a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
 
   td.what strong { display: block; font-weight: 600; }
   td.what span { color: var(--ink-soft); font-size: .9rem; }
@@ -350,7 +379,10 @@
     .lede { font-size: 11pt; }
     /* jamais sur `section` : un bloc plus haut qu'une page serait
        repoussé entier et laisserait une page quasi vide derrière lui. */
-    .diagram, .note, .table-scroll { break-inside: avoid; }
+    /* `.table-scroll` est exclu : les deux tableaux dépassent une page, et un bloc
+       insécable plus haut qu'une page est repoussé entier, laissant une page vide
+       derrière lui. Les lignes restent protégées par la règle `tr` ci-dessous. */
+    .diagram, .note { break-inside: avoid; }
     tr, .layer, .flow, .box, .section-head { break-inside: avoid; }
     .section-head { break-after: avoid; }
     h1, h2 { break-after: avoid; }
@@ -374,6 +406,7 @@
       dans un établissement.
     </p>
     <p class="meta">9 services Docker · ~4 700 lignes · 59 tests backend, 0 côté front · 74 commits, avril 2026</p>
+    <p class="srclink">Code du projet analysé : <a href="https://github.com/Usannazcedric/projet-2-iot-sante">github.com/Usannazcedric/projet-2-iot-sante</a></p>
   </header>
 
   <!-- ============ 01 ARCHITECTURE ============ -->
@@ -485,8 +518,8 @@
   <section>
     <div class="section-head">
       <span class="eyebrow">02</span>
-      <h2>Écarts avec un produit fini</h2>
-      <p>Dix points manquants, cotés en criticité et en effort.</p>
+      <h2>Écarts techniques</h2>
+      <p>Chaque ligne porte la dimension de la grille qu'elle couvre.</p>
     </div>
 
     <div class="table-scroll">
@@ -496,64 +529,120 @@
         </thead>
         <tbody>
           <tr>
-            <td class="id">É1</td>
-            <td class="what"><strong>Aucun capteur réel</strong><span>Toute la donnée vient du simulateur. Aucun pilote BLE ou LoRa, pas d'appairage, pas de gestion de batterie ni de perte de lien.</span></td>
+            <td class="id">T1<span class="dim">Données &amp; capteur</span></td>
+            <td class="what"><strong>Aucun capteur réel</strong><span>Toute la mesure est tirée d'une loi normale par le simulateur. Pas de pilote BLE ou LoRa, pas d'appairage, pas de gestion de batterie ni de perte de lien, et aucun traitement des artefacts de mesure — bracelet retiré, brassard mal posé, résident qui bouge.</span></td>
             <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
             <td class="eff">Élevé</td>
           </tr>
           <tr>
-            <td class="id">É2</td>
+            <td class="id">T2<span class="dim">Diffusion</span></td>
             <td class="what"><strong>L'alerte ne sort pas du navigateur</strong><span>Un toast dans l'onglet ouvert, rien d'autre. La nuit, personne devant l'écran : il faut du SMS, du push ou le bip de l'établissement.</span></td>
             <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
             <td class="eff">Moyen</td>
           </tr>
           <tr>
-            <td class="id">É3</td>
+            <td class="id">T3<span class="dim">Identité</span></td>
             <td class="what"><strong>Aucune authentification</strong><span>Toutes les routes sont ouvertes. N'importe qui lit les constantes des 20 résidents et peut acquitter — donc éteindre — une alerte vitale.</span></td>
             <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
             <td class="eff">Moyen</td>
           </tr>
           <tr>
-            <td class="id">É4</td>
-            <td class="what"><strong>MQTT anonyme, aucun TLS</strong><span><code>allow_anonymous true</code> et zéro chiffrement. Un faux client peut injecter de fausses constantes.</span></td>
+            <td class="id">T4<span class="dim">Sécurité device</span></td>
+            <td class="what"><strong>MQTT anonyme, secrets en clair, pas de mise à jour</strong><span><code>allow_anonymous true</code> et zéro TLS : un faux client peut injecter de fausses constantes. Le jeton InfluxDB est écrit en clair dans <code>docker-compose.yml</code>, et aucun mécanisme de mise à jour à distance (OTA) n'est prévu pour un parc de capteurs.</span></td>
             <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
             <td class="eff">Moyen</td>
           </tr>
           <tr>
-            <td class="id">É5</td>
+            <td class="id">T5<span class="dim">Référentiels</span></td>
             <td class="what"><strong>Résidents et personnel codés en dur</strong><span>Déclarés en Python. Admettre un résident ou le changer de chambre demande un redéploiement.</span></td>
             <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
             <td class="eff">Moyen</td>
           </tr>
           <tr>
-            <td class="id">É6</td>
-            <td class="what"><strong>ML entraîné sur nos propres données simulées</strong><span>Le modèle apprend le simulateur, pas la physiologie. Aucune mesure de faux positifs, donc rien de démontrable sur la détection.</span></td>
+            <td class="id">T6<span class="dim">IA</span></td>
+            <td class="what"><strong>Modèle entraîné sur nos propres données simulées</strong><span>L'IsolationForest apprend le simulateur, pas la physiologie. Aucun jeu de données réel, aucune mesure de faux positifs.</span></td>
             <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
             <td class="eff">Élevé</td>
           </tr>
           <tr>
-            <td class="id">É7</td>
-            <td class="what"><strong>Un seul backend, escalades en mémoire</strong><span>S'il redémarre, les escalades en cours disparaissent sans bruit : une alerte non acquittée ne montera jamais.</span></td>
+            <td class="id">T7<span class="dim">Disponibilité</span></td>
+            <td class="what"><strong>Un seul backend, escalades en mémoire</strong><span>S'il redémarre, les escalades en cours disparaissent sans bruit : une alerte non acquittée ne montera jamais. La panne est silencieuse, c'est le pire des cas.</span></td>
             <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
             <td class="eff">Élevé</td>
           </tr>
           <tr>
-            <td class="id">É8</td>
-            <td class="what"><strong>Données éphémères, aucune sauvegarde</strong><span>Volumes Docker locaux, rétention Influx de 30 jours. Aucune trace de qui a acquitté quelle alerte.</span></td>
+            <td class="id">T8<span class="dim">Données</span></td>
+            <td class="what"><strong>Données éphémères, aucune sauvegarde</strong><span>Volumes Docker locaux, rétention Influx de 30 jours. Aucune trace horodatée de qui a acquitté quelle alerte — rien d'opposable en cas de litige.</span></td>
             <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
             <td class="eff">Moyen</td>
           </tr>
           <tr>
-            <td class="id">É9</td>
-            <td class="what"><strong>Hébergement non HDS</strong><span>Des données de santé nominatives imposent un hébergeur certifié HDS. Chantier d'organisation, pas de code.</span></td>
+            <td class="id">T9<span class="dim">Interopérabilité</span></td>
+            <td class="what"><strong>Aucun lien avec le système d'information de l'établissement</strong><span>Ni FHIR, ni HL7, aucune route d'export. Les données restent prisonnières de la plateforme et ne remontent pas au dossier de soin : le soignant ressaisit à la main.</span></td>
             <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
+            <td class="eff">Moyen</td>
+          </tr>
+          <tr>
+            <td class="id">T10<span class="dim">Qualité</span></td>
+            <td class="what"><strong>Pas de CI, aucun test front</strong><span>59 tests backend solides, mais rien sur React ni sur la chaîne complète capteur → alerte → écran, et rien ne s'exécute automatiquement.</span></td>
+            <td class="cote"><span class="pill" data-crit="mineur">Mineur</span></td>
+            <td class="eff">Faible</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- ============ 03 ECARTS PRODUIT ============ -->
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">03</span>
+      <h2>Écarts produit et réglementaires</h2>
+      <p>Ceux qu'aucun sprint de développement ne ferme : ils se traitent en amont du code.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th></th><th>Écart</th><th>Criticité</th><th>Effort</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">R1<span class="dim">Statut</span></td>
+            <td class="what"><strong>Le produit n'est jamais qualifié</strong><span>Bien-être ou dispositif médical ? Il calcule un score de risque et déclenche une alerte de soin : très probablement un DM au sens du règlement 2017/745, donc marquage CE, dossier technique et organisme notifié. La question n'a pas été instruite.</span></td>
+            <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
             <td class="eff">Hors dev</td>
           </tr>
           <tr>
-            <td class="id">É10</td>
-            <td class="what"><strong>Pas de CI, aucun test front</strong><span>59 tests backend solides, mais rien sur React ni sur la chaîne capteur → alerte → écran, et rien ne s'exécute automatiquement.</span></td>
+            <td class="id">R2<span class="dim">Risques</span></td>
+            <td class="what"><strong>Aucune analyse de risques</strong><span>« Que se passe-t-il si l'alerte ne part pas ? » n'a pas de réponse écrite, alors que c'est exactement le mode de défaillance qui blesse. Ni AMDEC, ni ISO 14971, ni conduite à tenir en cas de panne.</span></td>
+            <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
+            <td class="eff">Moyen</td>
+          </tr>
+          <tr>
+            <td class="id">R3<span class="dim">Données personnelles</span></td>
+            <td class="what"><strong>Ni hébergement HDS, ni AIPD, ni consentement</strong><span>Des données de santé nominatives imposent les trois. Aucun n'existe : le système tourne sur des volumes Docker locaux, sans analyse d'impact ni recueil du consentement des résidents ou de leurs tuteurs.</span></td>
+            <td class="cote"><span class="pill" data-crit="bloquant">Bloquant</span></td>
+            <td class="eff">Hors dev</td>
+          </tr>
+          <tr>
+            <td class="id">R4<span class="dim">Validation</span></td>
+            <td class="what"><strong>Performance jamais prouvée contre une référence</strong><span>Ni sensibilité, ni spécificité, ni taux de fausses alertes par nuit. Impossible d'affirmer que le système détecte mieux qu'une ronde — or c'est la seule promesse qui justifie de l'acheter.</span></td>
+            <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
+            <td class="eff">Élevé</td>
+          </tr>
+          <tr>
+            <td class="id">R5<span class="dim">Usage</span></td>
+            <td class="what"><strong>Jamais testé avec de vrais soignants ni résidents</strong><span>Zéro essai terrain. On ignore si cinq niveaux d'alerte restent tenables une nuit à deux aides-soignantes, et si le tableau de bord est lisible dans le couloir plutôt qu'au bureau.</span></td>
+            <td class="cote"><span class="pill" data-crit="majeur">Majeur</span></td>
+            <td class="eff">Moyen</td>
+          </tr>
+          <tr>
+            <td class="id">R6<span class="dim">Modèle économique</span></td>
+            <td class="what"><strong>Qui paie n'a pas été abordé</strong><span>L'établissement, l'ARS, la famille ? La réponse décide du périmètre à construire : un forfait par lit et un abonnement par résident ne donnent pas le même produit.</span></td>
             <td class="cote"><span class="pill" data-crit="mineur">Mineur</span></td>
-            <td class="eff">Faible</td>
+            <td class="eff">Hors dev</td>
           </tr>
         </tbody>
       </table>
@@ -563,14 +652,14 @@
       <span>Bloquant = empêche la mise en service</span>
       <span>Majeur = exploitation dégradée</span>
       <span>Mineur = dette acceptable</span>
-      <span>Faible ≤ 2 j · Moyen 3–8 j · Élevé &gt; 8 j</span>
+      <span>Faible ≤ 2 j · Moyen 3–8 j · Élevé &gt; 8 j · Hors dev = ni code ni sprint</span>
     </div>
   </section>
 
-  <!-- ============ 03 LECTURE ============ -->
+  <!-- ============ 04 LECTURE ============ -->
   <section>
     <div class="section-head">
-      <span class="eyebrow">03</span>
+      <span class="eyebrow">04</span>
       <h2>Ce qu'il faut en retenir</h2>
     </div>
 
@@ -585,12 +674,21 @@
         une identité derrière chaque geste, et une alerte qui franchit les limites du navigateur.
         Tant que ces trois-là manquent, un établissement ne peut pas brancher le système.
       </p>
+      <p>
+        <strong>Et la moitié du chemin restant ne s'écrit pas en code.</strong> Qualifier le produit,
+        analyser les risques, encadrer les données personnelles, mesurer la détection contre une référence,
+        essayer le tout avec de vrais soignants : six écarts sur seize se jouent avant le premier commit.
+        C'est là que se trouve la vraie distance avec un produit fini.
+      </p>
     </div>
 
     <ol class="next">
-      <li><strong>D'abord</strong> — É2 et É3 : faire sortir l'alerte de l'écran, et savoir qui l'acquitte.</li>
-      <li><strong>Ensuite</strong> — É4, É5, É8 : chiffrement, référentiels en base, sauvegardes.</li>
-      <li><strong>Enfin</strong> — É1 et É6 : vrais capteurs et validation du modèle, les deux gros chantiers.</li>
+      <li><strong>D'abord</strong> — T2, T3 et R2 : faire sortir l'alerte de l'écran, savoir qui l'acquitte,
+        et écrire noir sur blanc ce qui se passe quand elle ne part pas.</li>
+      <li><strong>Ensuite</strong> — T4, T5, T8 et R3 : chiffrement, référentiels en base, sauvegardes,
+        et le cadre RGPD-HDS sans lequel aucune donnée réelle ne peut entrer.</li>
+      <li><strong>Enfin</strong> — T1, T6, R1 et R4 : vrais capteurs, validation du modèle contre une
+        référence, qualification réglementaire. Les gros chantiers, et ils vont ensemble.</li>
     </ol>
   </section>
 
