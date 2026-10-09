@@ -38,3 +38,6 @@ models/
 # Compilation locale du firmware (Wokwi for VS Code)
 firmware/m1_wokwi/build/
 firmware/m1_wokwi/.build/
+
+# Donnees PhysioNet BIDMC du TP M2-1 (publiques, retelechargeables par le notebook)
+data/bidmc_*.csv
