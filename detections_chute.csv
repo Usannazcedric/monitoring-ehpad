@@ -1,0 +1,12 @@
+fichier,sujet,activite,verite_chute,norme_min_g,norme_max_g,alertes_naive,alerte_naive,resultat_naive,alertes_trois_temps,alerte_trois_temps,resultat_trois_temps
+20261002_eq00_s01_debout_hanche_r01.csv,s01,debout,False,0.97,1.03,0,False,VN,0,False,VN
+20261002_eq00_s01_marche_hanche_r01.csv,s01,marche,False,0.77,1.48,0,False,VN,0,False,VN
+20261002_eq00_s01_assis-debout_hanche_r01.csv,s01,assis-debout,False,0.81,1.32,0,False,VN,0,False,VN
+20261002_eq00_s01_assis_hanche_r01.csv,s01,assis,False,0.98,1.03,0,False,VN,0,False,VN
+20261002_eq00_s01_allonger_hanche_r01.csv,s01,allonger,False,0.74,1.46,0,False,VN,0,False,VN
+20261002_eq00_s01_chute-objet_main_r01.csv,s01,chute-objet,True,0.04,4.59,1,True,VP,1,True,VP
+20261002_eq00_s02_debout_hanche_r01.csv,s02,debout,False,0.97,1.03,0,False,VN,0,False,VN
+20261002_eq00_s02_marche_hanche_r01.csv,s02,marche,False,0.75,1.5,0,False,VN,0,False,VN
+20261002_eq00_s02_assis-debout_hanche_r01.csv,s02,assis-debout,False,0.53,2.87,1,True,FP,0,False,VN
+20261002_eq00_s02_chute-objet_main_r01.csv,s02,chute-objet,True,0.02,8.0,1,True,VP,1,True,VP
+20261002_eq00_s02_chute-objet_main_r02.csv,s02,chute-objet,True,0.02,3.79,1,True,VP,1,True,VP
