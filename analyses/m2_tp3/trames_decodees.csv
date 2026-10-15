@@ -1,0 +1,7 @@
+n°,trame,flags_bin,format_fc,contact,fc_bpm,energie_kJ,rr_ms,fc_instantanee_bpm,bits_reserves_a_1
+1,00 48,00000000,uint8,non pris en charge,72,,[],[],False
+2,01 5A 00,00000001,uint16,non pris en charge,90,,[],[],False
+3,06 3E,00000110,uint8,contact détecté,62,,[],[],False
+4,0E 55 E8 03,00001110,uint8,contact détecté,85,1000,[],[],False
+5,16 4B 20 03,00010110,uint8,contact détecté,75,,[781.2],[76.8],False
+6,1E 4E C8 00 F0 02 10 03,00011110,uint8,contact détecté,78,200,"[734.4, 765.6]","[81.7, 78.4]",False
