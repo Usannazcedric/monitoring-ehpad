@@ -56,9 +56,9 @@ s'organiser* (hors MDR) contre *détecter ou corriger un événement de santé* 
 
 ## Question 5 — Notre projet (ligne 9)
 
-**Projet 2 — détection et prédiction de malaise et de chute en EHPAD**, 20+ résidents équipés
-de capteurs, scoring IA, alertes graduées à 5 niveaux, tableau de bord soignants.
-*(La lettre du cas, A à F, reste à confirmer avec l'intervenant.)*
+**Cas A (chute) — Projet 2 : détection et prédiction de malaise et de chute en EHPAD**,
+20+ résidents équipés de capteurs, scoring IA, alertes graduées à 5 niveaux, tableau de bord
+soignants.
 
 - **(a)** **Dispositif médical.** La finalité revendiquée est explicitement médicale : surveiller
   des constantes vitales, détecter un malaise ou une chute, prédire un risque et alerter le
@@ -67,6 +67,12 @@ de capteurs, scoring IA, alertes graduées à 5 niveaux, tableau de bord soignan
   mouvement) dans une situation où un retard d'alerte peut être fatal : **classe IIb**. Si le
   périmètre était réduit à une surveillance de confort sans urgence vitale revendiquée, la
   classe retomberait à IIa — mais le cahier des charges parle de détection de malaise, donc IIb.
+Le cours (séquence 2, dernière diapositive) présente trois lectures possibles de la même
+promesse : « alerte les soignants quand un résident tombe » peut se lire comme de la sécurité
+de la personne ; « prévient les complications d'une chute » et « prédit le risque de chute »
+sont plutôt médicales (prévention, prédiction). Notre cahier des charges revendique la
+**prédiction** du risque de malaise : c'est la lecture médicale qui s'applique.
+
 - **(d)** **Oui, organisme notifié obligatoire** (dès IIa ; GMED en France), avec tout ce qui
   l'accompagne : système de management de la qualité (ISO 13485), cycle de vie logiciel
   (IEC 62304), gestion des risques (ISO 14971), évaluation clinique et surveillance après
