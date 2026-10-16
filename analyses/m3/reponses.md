@@ -82,3 +82,21 @@ Conséquence pour la suite du projet : la version actuelle est un **prototype p�
 produit marquable CE. Pour l'approcher, il faudrait figer la finalité revendiquée, tracer les
 exigences, documenter les risques (faux négatif sur une chute, fausse alerte) et prévoir la
 validation clinique.
+
+## Après la correction collective (exercice 1)
+
+Le corrigé confirme nos 9 lignes. Trois précisions à retenir :
+
+- **Produit 5 (pompe à insuline)** : la classe dépend du modèle. Omnipod DASH = **IIb, règle 12**
+  (c'est notre réponse) ; un modèle en boucle fermée, qui décide lui-même de la dose à partir de
+  sa propre mesure, relève de la **règle 22 et passe en classe III**. Plus la machine décide
+  seule, plus la classe monte.
+- **Produit 6 (Implicity)** : déclaré **classe I sous l'ancienne directive 93/42/CEE**, mais au
+  moins **IIa sous le MDR** (règle 11), avec les délais de transition prévus jusqu'en 2027-2028.
+  Notre IIa reste la bonne hypothèse, à condition de préciser le régime et la date de la source.
+- **Produit 4 (balance)** : règle 10 **ou** règle 11, les deux mènent à IIa — la règle 10 vise
+  l'appareil qui mesure, la règle 11 le logiciel qui interprète le tracé.
+
+Les deux pièges signalés par le corrigé sont évités dans notre grille : aucune ligne « IIa » avec
+organisme notifié « Non », et aucune justification qui dit « pas un dispositif médical » en face
+d'une classe remplie.
