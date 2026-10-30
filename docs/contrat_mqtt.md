@@ -183,7 +183,13 @@ leur rendant leur topic Digi4 (`mosquitto/config/mosquitto.conf`) :
 topic vitals/resident/+ in 0 ehpad/ digi5/equipe-ehpad/ehpad/
 topic motion/resident/+ in 0 ehpad/ digi5/equipe-ehpad/ehpad/
 topic alerts/new        in 0 ehpad/ digi5/equipe-ehpad/ehpad/
+topic ambient/room/+    in 0 ehpad/ digi5/equipe-ehpad/ehpad/
+topic door/room/+       in 0 ehpad/ digi5/equipe-ehpad/ehpad/
 ```
+
+Les deux dernières lignes servent au firmware du Projet 1 (`firmware/p1_wokwi/`). Il
+publie aussi l'état de la chambre 121, présence et porte, au format du simulateur :
+`{"values": {"type": "pir" | "door", "value": 0 | 1}}`.
 
 ```
 ESP32 (Wokwi)                     broker.hivemq.com

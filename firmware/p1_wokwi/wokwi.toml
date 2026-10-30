@@ -1,0 +1,10 @@
+# Configuration de l'extension "Wokwi for VS Code".
+# Permet de compiler et simuler en local, sans passer par la file d'attente
+# des serveurs de build de wokwi.com (erreur "Build Servers Busy").
+#
+# Les deux chemins pointent vers la sortie de ./build.sh, qui lance arduino-cli.
+
+[wokwi]
+version = 1
+firmware = 'build/sketch.ino.bin'
+elf      = 'build/sketch.ino.elf'

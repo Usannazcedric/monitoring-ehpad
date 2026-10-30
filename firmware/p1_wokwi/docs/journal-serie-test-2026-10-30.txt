@@ -1,0 +1,32 @@
+Journal série du test du firmware P1 sur wokwi.com, le 30 octobre 2026 (horodatage UTC).
+Firmware : firmware/p1_wokwi/sketch.ino (SHA-1 d2b4ed91f51ed6027b7cdb8c18d1d2f4c0476ce6), montage diagram.json.
+Lignes d'événements extraites du moniteur série ; les « PUB vitals » périodiques sont abrégés.
+Données fictives, broker public.
+
+MPU-6050 detecte (0x68)
+Bracelet : porte | porte : fermee
+Wi-Fi OK, IP = 10.10.0.2
+NTP : synchronisation...................... OK
+MQTT : connexion a broker.hivemq.com:1883 (client digi5-equipe-ehpad-esp32-01-b242a2a)... OK
+[PUB vitals] {"timestamp":"2026-10-30T16:10:38.363Z","resident_id":"R021","values":{"hr":83},"vitals":{"hr":83},"scenario":"normal","seq":0,"source":"esp32","device_id":"esp32-01","measured":["hr"],"hr_cv":0.000}
+[PUB vitals] {"timestamp":"2026-10-30T16:10:40.361Z","resident_id":"R021","values":{"hr":85},"vitals":{"hr":85},"scenario":"normal","seq":1,"source":"esp32","device_id":"esp32-01","measured":["hr"],"hr_cv":0.014}
+(... un message toutes les 2 s, hr_cv entre 0,013 et 0,022 ...)
+
+# Interrupteur « bracelet porté » basculé : plus aucun vitals après cette ligne
+[PORT] bracelet RETIRE : aucune mesure n'est plus envoyee
+# Interrupteur de porte basculé, puis « Simulate motion » sur le PIR
+[CHAMBRE 121] porte OUVERTE
+[CHAMBRE 121] presence : mouvement
+[CHAMBRE 121] presence : calme
+# 30 s (simulées) après le retrait du bracelet
+[ALERTE publiee L2] {"id":"17de12019ba128598c07027185977826","resident_id":"R021","level":2,"reason":"bracelet non porte depuis 30 s : mesures suspendues","status":"active","created_at":"2026-10-30T16:11:47.688Z","updated_at":"2026-10-30T16:11:47.688Z","last_seen":"2026-10-30T16:11:47.688Z","acknowledged_by":null,"source":"esp32","device_id":"esp32-01"}
+# Interrupteur remis : les vitals reprennent
+[PORT] bracelet remis : reprise des mesures
+
+# MPU-6050 : accelX 0 -> 2 g (choc), puis accelX = 1 g, accelZ = 0 g (couché), sans plus toucher
+[CHUTE ?] choc de 2.24 g : on attend l'immobilite et la position
+[ALERTE locale L4] fall detected (choc 2.2 g, immobile 3 s, rotation 90 deg)
+
+# Retour debout (X = 0, Z = 1) ; choc X = 2, Y = 0,5, Z = 1,5 (norme 2,55 g) puis retour X = 0, Z = 1
+[CHUTE ?] choc de 2.55 g : on attend l'immobilite et la position
+[CHUTE ECARTEE] choc 2.5 g puis immobile, mais rotation 0 deg < 50 : assis lourdement ? Pas d'alerte. (regle naive du module 1 : AURAIT ALERTE)
