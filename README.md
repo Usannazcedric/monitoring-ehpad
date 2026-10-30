@@ -13,6 +13,9 @@ Ce dépôt **continue** le projet de l'an dernier (Digi4), archivé tel quel sur
 
 | Livrable | Où |
 | --- | --- |
+| **Projet 1 (MBA 2) — dossier de cadrage, cas A (chute)** | [`projet1/dossier_cadrage.md`](projet1/dossier_cadrage.md) |
+| TP des modules 2 et 3 (PPG, pas et chute, BLE, classification MDR, analyse de risques) | [`analyses/`](analyses/) |
+| Cahier des charges d'origine (MBA 1, Projet 2) | [`docs/cahier-des-charges-projet2.pdf`](docs/cahier-des-charges-projet2.pdf) |
 | Architecture et écarts avec un produit fini (16 écarts cotés) | [`docs/etat-des-lieux.pdf`](docs/etat-des-lieux.pdf) · [version web](docs/etat-des-lieux.html) |
 | Contrat MQTT — correspondance Digi4 → Digi5 | [`docs/contrat_mqtt.md`](docs/contrat_mqtt.md) |
 | Module 1 — firmware ESP32 qui remplace le simulateur Python | [`firmware/m1_wokwi/`](firmware/m1_wokwi/) |
@@ -223,11 +226,16 @@ curl -X POST http://localhost:9100/scenario/R002 \
 │       ├── wokwi.toml    # simulation locale via l'extension Wokwi for VS Code
 │       ├── build.sh      # compilation locale (arduino-cli), contourne la file Wokwi
 │       └── docs/         # démonstration vidéo et captures d'écran
+├── projet1/              # MBA 2 — dossier de cadrage du Projet 1 (cas A, chute)
+│   ├── dossier_cadrage.md
+│   └── donnees/          # vraies données enregistrées (exercice 4)
+├── analyses/             # TP des modules 2 et 3, un dossier par TP
 ├── docker-compose.yml
 ├── docs/
 │   ├── architecture.md   # Documentation technique détaillée
 │   ├── contrat_mqtt.md   # Topics, formats JSON, seuils (Digi4 → Digi5)
-│   └── etat-des-lieux.pdf # Architecture + 16 écarts avec un produit fini
+│   ├── etat-des-lieux.pdf # Architecture + 16 écarts avec un produit fini
+│   └── cahier-des-charges-projet2.pdf # Sujet d'origine (MBA 1)
 └── README.md
 ```
 
