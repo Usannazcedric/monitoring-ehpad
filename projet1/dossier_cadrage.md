@@ -91,12 +91,6 @@ Les moments de mesure sont numérotés **M0 à M5**, les ruptures **R1 à R15**.
 | Traitement de l'alerte | Aide-soignante de garde, infirmier, opérateur de télésurveillance, SAMU si niveau 5 | Acquitte l'alerte, va dans la chambre, évalue et relève la résidente, appelle l'infirmier, le médecin ou le 15, puis clôture avec un motif (vraie chute, fausse alerte). | **M4 — les délais** : détection → acquittement → arrivée dans la chambre, et le motif de clôture (sert à mesurer la performance réelle). | **R13** Soignante occupée ailleurs : l'alerte n'est pas acquittée et doit escalader (2→3 en 10 min, 3→4 en 5 min, 4→5 en 3 min). **R14** L'événement n'est pas reporté dans le dossier de soins (ressaisie à la main, oubli). |
 | Fin | Médecin coordonnateur, équipe soignante, famille | Arrêt de l'objet : risque réévalué, résidente alitée, hospitalisation, départ ou décès. Le bracelet est dissocié, nettoyé, réattribué. Les données sont archivées puis supprimées. | **M5 — bilan** : chutes détectées, délais moyens, fausses alertes par nuit ; réévaluation périodique du risque (**hypothèse** : tous les 3 mois). | **R15** Bracelet réattribué sans réinitialiser le profil : le modèle garde le « normal » de l'ancienne résidente. Données conservées sans limite de durée (RGPD). Oubli de désactiver : alertes fantômes. |
 
-**À retenir pour le tour de 11:15**
-
-- **Le problème** : la nuit, une chute en chambre est découverte trop tard, parce que tout repose sur des rondes et sur un bouton que la résidente n'utilise pas.
-- **Les mesures clés** : M2 (mesure continue sans action de la résidente), M3 (détection de l'événement), M4 (délai jusqu'à l'arrivée du soignant, notre vrai indicateur de succès).
-- **Les ruptures clés** : R7-R8 (bracelet non porté ou vide), R11 (fausses alertes qui tuent la confiance), R12 (alerte qui ne sort pas de l'écran la nuit).
-
 ---
 
 ## Partie 2 — La phrase et la classe (exercice 2)
