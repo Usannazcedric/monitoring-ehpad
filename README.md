@@ -231,7 +231,8 @@ curl -X POST http://localhost:9100/scenario/R002 \
 ├── projet1/              # MBA 2 — dossier de cadrage du Projet 1 (cas A, chute)
 │   ├── dossier_cadrage.md
 │   ├── figures/          # schéma de bout en bout
-│   └── donnees/          # vraies données enregistrées (exercice 4)
+│   ├── donnees/          # vraies données enregistrées (exercice 4) et protocole
+│   └── traitement/       # analyse des vraies données (règles de chute)
 ├── analyses/             # TP des modules 2 et 3, un dossier par TP
 ├── docker-compose.yml
 ├── docs/

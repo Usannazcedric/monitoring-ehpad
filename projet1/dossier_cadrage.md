@@ -12,8 +12,8 @@ MBA 2 Santé, IA & IoT — Epitech — 2026-2027 · journée du 30 octobre 2026 
 | 10:00-11:15 | Exercice 1 — Le besoin | [Partie 1](#partie-1--le-besoin-exercice-1) | fait |
 | 11:30-12:30 | Exercice 2 — La phrase et la classe | [Partie 2](#partie-2--la-phrase-et-la-classe-exercice-2) | fait |
 | 14:00-15:00 | Exercice 3 — L'architecture | [Partie 3](#partie-3--larchitecture-exercice-3) | fait |
-| 15:00-16:30 | Exercice 4 — La preuve de concept | [Partie 4](#partie-4--la-preuve-de-concept-exercice-4) | 4.1 fait (Wokwi P1 testé) ; **4.2 et 4.3 à finir avant le 13 novembre** |
-| 16:30-17:00 | Bilan | [Bilan](#bilan--les-3-tâches-pour-le-13-novembre) | à finir avant le 13 novembre |
+| 15:00-16:30 | Exercice 4 — La preuve de concept | [Partie 4](#partie-4--la-preuve-de-concept-exercice-4) | en partie : Wokwi P1 testé, autonomie calculée, traitement prêt ; **4.2 (vraies données) à finir la semaine du 2 novembre**, capture du tableau de bord à faire |
+| 16:30-17:00 | Bilan | [Bilan](#bilan--les-3-tâches-pour-le-13-novembre) | fait |
 
 ---
 
@@ -178,7 +178,7 @@ Source du schéma : [`figures/schema_bout_en_bout.svg`](figures/schema_bout_en_b
 | --- | --- |
 | Ce qu'on mesure | (1) **L'accélération sur 3 axes**, pour la chute : choc, puis immobilité, puis position allongée. (2) **La FC et la SpO2**, pour le malaise. (3) **Le port du bracelet** (contact avec la peau), pour qu'un silence ne passe jamais pour « tout va bien ». (4) Dans la chambre, **la présence au lit et l'ouverture de la porte** : une détection indépendante du bracelet, qui couvre les ruptures R7 et R10. |
 | Capteur du prototype | MPU-6050 simulé dans Wokwi (plage ±8 g). **Potentiomètre** à la place de la FC, parce que Wokwi ne simule pas de capteur de pouls. Interrupteurs à la place de la détection de port et de la porte, détecteur de présence (PIR) Wokwi. **Smartphone avec phyphox** pour les vraies données d'accélération (partie 4.2). SpO2 seulement dans le simulateur Python. Le kit du Projet 2 apportera un vrai MAX30102 (capteur de pouls et d'oxygène) et un vrai MPU-6050. |
-| Capteur du vrai produit | Un **bracelet de poignet déjà marqué CE comme dispositif médical**, qui mesure FC, SpO2 et accélération. Il doit **laisser tourner notre règle de chute**. Deux options : (a) un kit de développement qui l'exécute sur le bracelet ; (b) le bracelet envoie quelques secondes d'accélération brute (≥ 50 Hz) autour de chaque choc, quand son accéléromètre le réveille, et la passerelle décide. Envoyer l'accélération en continu par BLE viderait la batterie. Les constantes passent **par un profil BLE standard** : Heart Rate 0x180D et Pulse Oximeter 0x1822, vus au TP M2-3. Il doit tenir **≥ 7 jours** sur batterie (**hypothèse** d'exigence), être étanche IP67 et se désinfecter. Les capteurs de chambre (présence au lit, porte) viennent du commerce. Aucun modèle n'est encore choisi : comparatif fournisseurs **à faire**. |
+| Capteur du vrai produit | Un **bracelet de poignet déjà marqué CE comme dispositif médical**, qui mesure FC, SpO2 et accélération. Il doit **laisser tourner notre règle de chute**. Deux options : (a) un kit de développement qui l'exécute sur le bracelet ; (b) le bracelet envoie quelques secondes d'accélération brute (≥ 50 Hz) autour de chaque choc, quand son accéléromètre le réveille, et la passerelle décide. Envoyer l'accélération en continu par BLE viderait la batterie (partie 4.3). Les constantes passent **par un profil BLE standard** : Heart Rate 0x180D et Pulse Oximeter 0x1822, vus au TP M2-3. Il doit tenir **≥ 7 jours** sur batterie (**hypothèse** d'exigence), être étanche IP67 et se désinfecter. Les capteurs de chambre (présence au lit, porte) viennent du commerce. Aucun modèle n'est encore choisi : comparatif fournisseurs **à faire**. |
 | Fabriquer (build) ou acheter un dispositif CE existant (buy) ? | **Acheter le capteur, fabriquer le logiciel.** On achète le bracelet de mesure ; on développe la détection de chute, le moteur d'alertes, l'escalade et le tableau de bord. Notre valeur est là. |
 | Pourquoi (délai, coût, preuves, dépendance) | **Délai** : un bracelet PPG avec SpO2, c'est de l'électronique, un boîtier étanche, les essais IEC 60601 et une validation clinique de la SpO2 selon ISO 80601-2-61 (désaturations contrôlées sur volontaires). Il faut plusieurs années (**hypothèse**). En achetant, un pilote en EHPAD devient possible dès le Projet 2. **Coût** : ces essais et la certification du matériel coûteraient des centaines de milliers d'euros (**hypothèse**), contre un bracelet du commerce à quelques centaines d'euros pièce (**à vérifier** sur devis). **Preuves** : le fabricant fournit sa déclaration de conformité et la précision mesurée de FC et SpO2 ; il nous reste à prouver notre détection et nos alertes. Le TP M2-1 a montré qu'un PPG au poignet se dégrade beaucoup avec le mouvement (erreur moyenne de 10,5 bpm pendant l'artefact contre 0,9 sans) : c'est un métier à part. **Dépendance** : c'est le prix à payer (interface fermée, arrêt de gamme, hausse des prix, données forcées vers le cloud du fabricant). Exigences au contrat : accès local aux données brutes en BLE standard, pas de cloud imposé (HDS), deux fournisseurs qualifiés. **Critère éliminatoire** : un bracelet qui ne donne accès ni à l'accélération autour d'un choc ni à son propre calcul, car notre détection de chute ne pourrait pas tourner. Il ne resterait alors que sa détection à lui, qu'il faudrait valider comme la nôtre. |
 
@@ -189,7 +189,7 @@ La dernière colonne renvoie aux écarts cotés dans [`docs/etat-des-lieux.pdf`]
 | Sujet | Prototype | Vrai produit | Ce qu'il faudra faire | État des lieux |
 | --- | --- | --- | --- | --- |
 | Capteur et précision | FC réglée à la main au potentiomètre. SpO2 inventée par le simulateur. Détection de chute réglée sur des **chutes de téléphone** (TP M2-2 : précision 1,00 et rappel 1,00, mais sur un jeu synthétique). | FC et SpO2 mesurées au poignet avec une précision déclarée par le fabricant. Chute détectée sur des chutes **humaines**, avec un taux de fausses alertes par nuit connu. | Choisir le bracelet et mesurer sa précision dans nos conditions (mouvement, peau âgée, mauvaise perfusion). Valider la détection sur un jeu public de chutes humaines (SisFall, UP-Fall ; licence **à vérifier**), puis dans un EHPAD. Viser au plus 2 fausses alertes par nuit (partie 1.2). | T1, T6, R4 |
-| Énergie et autonomie | Carte alimentée par USB, Wi-Fi allumé en permanence, une publication toutes les 2 s. Avec le calculateur du module 2, cela donne **moins d'un jour** (0,9 jour) sur une LiPo de 1000 mAh. | ≥ 7 jours, recharge hebdomadaire sur socle, batterie faible signalée **avant** l'arrêt (**hypothèse** d'exigence). | Passer au BLE et à un accéléromètre basse consommation qui réveille la carte sur un choc. FC et SpO2 toutes les 5 min : 15 jours sur 1000 mAh, mais seulement 4,5 jours sur un bracelet de 300 mAh (calculateur du module 2, détail en 4.3). **Mesurer** la vraie consommation au Projet 2. Alerte technique sous 20 % de batterie (ligne 1 de l'analyse de risques). | — |
+| Énergie et autonomie | Carte alimentée par USB, Wi-Fi allumé en permanence, une publication toutes les 2 s. Avec le calculateur du module 2, cela donne **moins d'un jour** (0,9 jour) sur une LiPo de 1000 mAh (partie 4.3). | ≥ 7 jours, recharge hebdomadaire sur socle, batterie faible signalée **avant** l'arrêt (**hypothèse** d'exigence). | Passer au BLE et à un accéléromètre basse consommation qui réveille la carte sur un choc. FC et SpO2 toutes les 5 min : 15 jours sur 1000 mAh, mais seulement 4,5 jours sur un bracelet de 300 mAh (4.3). **Mesurer** la vraie consommation au Projet 2. Alerte technique sous 20 % de batterie (ligne 1 de l'analyse de risques). | — |
 | Réseau | Wi-Fi vers un broker public. Si le réseau coupe, les messages sont perdus ; le Last Will de la carte n'est exploité par personne. | BLE vers une passerelle par chambre ou couloir, réseau de l'établissement avec secours 4G. Messages gardés en mémoire et renvoyés après coupure. Un capteur muet est signalé en quelques minutes. | Mesurer la couverture radio dans un vrai EHPAD (rupture R5). Faire lever par le backend une alerte technique « capteur hors ligne » à partir du message `offline`. Rendre persistantes les escalades en cours. | T7 |
 | Sécurité (mots de passe, mises à jour) | MQTT anonyme, sans TLS (`allow_anonymous true`). Jeton InfluxDB en clair dans `docker-compose.yml`. Tableau de bord sans authentification : n'importe qui peut acquitter une alerte vitale. Aucune mise à jour à distance. | TLS, certificat propre à chaque appareil, comptes nominatifs avec rôles, journal de qui a acquitté quoi, mises à jour signées à distance (OTA), veille des vulnérabilités (MDCG 2019-16). | Au Projet 2 : TLS et identifiants par appareil, authentification du tableau de bord, secrets sortis du dépôt, plan de mises à jour. Le placeholder TLS est déjà prêt dans le firmware (`USE_TLS 1`). | T3, T4 |
 | Boîtier, nettoyage, contact avec la peau | Aucun boîtier : carte simulée, téléphone pour les essais. | Bracelet étanche (douche), désinfectable avec les produits de l'établissement, matériaux testés pour le contact prolongé avec la peau (ISO 10993), confortable la nuit, fermoir que le résident ne perd pas. | Mettre ces exigences au cahier des charges fournisseur. Faire porter le bracelet jour et nuit par des résidents volontaires (ruptures R1 et R7). Écrire le protocole de nettoyage et de réattribution (rupture R15). | R5 |
@@ -214,10 +214,10 @@ Le projet Wokwi du module 1 ([`firmware/m1_wokwi/`](../firmware/m1_wokwi/)) est 
 
 | | |
 | --- | --- |
-| Lien du projet Wokwi | Module 1 (base) : https://wokwi.com/projects/476778339332099073. **Projet 1** : code dans [`firmware/p1_wokwi/`](../firmware/p1_wokwi/) (`diagram.json`, `sketch.ino`, `libraries.txt`). **Testé le 30/10 sur wokwi.com**, dans un projet sans compte, donc sans lien permanent. Compilation, Wi-Fi, NTP et MQTT OK ([journal série](../firmware/p1_wokwi/docs/journal-serie-test-2026-10-30.txt)). **Lien à créer** depuis le compte Wokwi de l'équipe (bouton *Save*), avant le 13 novembre. |
+| Lien du projet Wokwi | Module 1 (base) : https://wokwi.com/projects/476778339332099073. **Projet 1** : code dans [`firmware/p1_wokwi/`](../firmware/p1_wokwi/) (`diagram.json`, `sketch.ino`, `libraries.txt`). **Testé le 30/10 sur wokwi.com**, dans un projet sans compte, donc sans lien permanent. Compilation, Wi-Fi, NTP et MQTT OK ([journal série](../firmware/p1_wokwi/docs/journal-serie-test-2026-10-30.txt)). **Lien à créer** depuis le compte Wokwi de l'équipe (bouton *Save*), tâche 2 du bilan. |
 | Capteurs simulés (et ce qu'ils remplacent) | **MPU-6050** : l'accéléromètre du bracelet. **Potentiomètre** : le capteur de pouls (FC), que Wokwi ne simule pas. **Bouton rouge** : le bouton d'appel du bracelet (SOS, niveau 5). **Interrupteur 1 (GPIO 32)** : la détection de port, contact du bracelet avec la peau (*nouveau*). **Détecteur de présence PIR (GPIO 27)** : le capteur de présence de la chambre (*nouveau*). **Interrupteur 2 (GPIO 33)** : le capteur d'ouverture de la porte de chambre (*nouveau*). **Buzzer** : l'alarme locale. La SpO2 n'est pas simulée sur la carte : elle n'existe que dans le simulateur Python (R001 à R020). |
 | Topic MQTT et contenu d'un message | Préfixe d'équipe `digi5/equipe-ehpad/ehpad/` (broker public partagé), puis les topics Digi4 : `vitals/resident/R021`, `motion/resident/R021`, `ambient/room/121` et `door/room/121` (*nouveaux*), `alerts/new`, `device/esp32-01/status`. Le pont Mosquitto les rapatrie en local, `ambient` et `door` compris ([`mosquitto.conf`](../mosquitto/config/mosquitto.conf)). Message `vitals` relevé pendant le test : `{"timestamp":"2026-10-30T16:10:40.361Z","resident_id":"R021","values":{"hr":85},"vitals":{"hr":85},"scenario":"normal","seq":1,"source":"esp32","device_id":"esp32-01","measured":["hr"],"hr_cv":0.014}`. `hr_cv` est la dispersion des 10 lectures de la fenêtre : au-dessus de 0,15, le message **n'est pas envoyé**. |
-| Capture du tableau de bord | Montage P1 en simulation : [`montage-wokwi-p1.jpg`](../firmware/p1_wokwi/docs/montage-wokwi-p1.jpg). Tableau de bord : capture du module 1, même chaîne, SOS de niveau 5 reçu en moins d'une seconde ([`dashboard.png`](../firmware/m1_wokwi/docs/dashboard.png)). **Capture P1 à faire** : la stack n'a pas pu démarrer sur ce poste, disque plein (Docker n'a pas pu télécharger l'image Ollama de 2,7 Go). À faire avant le 13 novembre. |
+| Capture du tableau de bord | Montage P1 en simulation : [`montage-wokwi-p1.jpg`](../firmware/p1_wokwi/docs/montage-wokwi-p1.jpg). Tableau de bord : capture du module 1, même chaîne, SOS de niveau 5 reçu en moins d'une seconde ([`dashboard.png`](../firmware/m1_wokwi/docs/dashboard.png)). **Capture P1 à faire** : la stack n'a pas pu démarrer sur ce poste, disque plein (Docker n'a pas pu télécharger l'image Ollama de 2,7 Go). C'est la tâche 2 du bilan. |
 
 **Ce que fait la carte P1, et comment le montrer** (déroulé de la démo, partie 3 du guide « démo idéale ») :
 
@@ -245,23 +245,41 @@ Le projet Wokwi du module 1 ([`firmware/m1_wokwi/`](../firmware/m1_wokwi/)) est 
 
 ### 4.2 Les vraies données
 
-_À remplir avant le 13 novembre : enregistrement phyphox la semaine du 2 novembre._
-
 | | |
 | --- | --- |
-| Source (phyphox, jeu de données) | |
-| Fichier dans `projet1/donnees/` | |
-| Ce qu'on a enregistré (activités, durée) | |
+| Source (phyphox, jeu de données) | **phyphox**, expérience « Accélération avec g », sur le téléphone d'un membre de l'équipe (pseudonymisé `s01`). Protocole complet : [`donnees/README.md`](donnees/README.md). |
+| Fichier dans `projet1/donnees/` | **À déposer.** Aucun enregistrement de l'équipe dans le dépôt le 30/10 à 17 h. Noms attendus : `20261030_eq05_s01_chute-objet_main_r01.csv`, `…_marche_hanche_r01.csv`, `…_assis-debout_hanche_r01.csv`, `…_allonger_hanche_r01.csv`, `…_assis_hanche_r01.csv`, `…_debout_hanche_r01.csv`, plus `labels.csv` (nombre de lâchers, nombre de pas). |
+| Ce qu'on a enregistré (activités, durée) | **Prévu par le protocole** : 10 lâchers du téléphone sur un coussin (≈ 3 min), 2 à 3 min de marche avec les pas comptés, 5 assis-debout dont 2 assis lourdement, 3 fois s'allonger, 1 min assis, 1 min debout. Environ 12 min en tout. **Pas encore enregistré** : à finir la semaine du 2 novembre (tâche 1 du bilan), avec la série d'une heure, au plus tard le 13/11. |
+
+Le traitement est prêt et testé ; il ne reste qu'à le lancer sur les fichiers : [`traitement/analyse_chutes.py`](traitement/analyse_chutes.py). Il applique les trois règles de chute (naïve du module 1, trois temps du TP M2-2, règle embarquée P1, identique au firmware). Il compte chutes détectées, fausses alertes, précision, rappel et **fausses alertes par heure**, puis écrit [`resultats/`](resultats/). Il a été vérifié sur un petit jeu **synthétique** de test, gardé hors du dépôt : ses chiffres ne sont **pas** des résultats et ne figurent pas ici.
 
 ### 4.3 Pour le 13 novembre
 
-_À remplir avant le 13 novembre._
-
 | | |
 | --- | --- |
-| Traitement (filtre, seuil, comptage) | |
-| Alerte de bout en bout (capture) | |
-| Autonomie calculée (calculateur du module 2) et hypothèses | |
+| Traitement (filtre, seuil, comptage) | **Chute** : choc > 2 g, puis 3 s immobile (écart-type de la norme < 0,05 g, fenêtre cherchée entre 1 et 15 s après le choc), puis pesanteur tournée de plus de 50° (debout ou assis → allongé). Sans phase de chute libre, parce qu'une personne âgée ne tombe pas comme un téléphone (conclusion du TP M2-2). Elle tourne sur la carte à 50 Hz et, à l'identique, dans le script sur les vraies données. **FC** : moyenne de 10 lectures sur 2 s, envoyée seulement si leur coefficient de variation est ≤ 0,15 (seuil du TP M2-1). **Port** : bracelet retiré, plus rien n'est envoyé. **Pas** : passe-bande 0,5-3 Hz et pics > 0,10 g (TP M2-2), sur les fichiers de marche. **À faire** : chiffrer la règle P1 sur les vraies données (précision, rappel, fausses alertes par heure). |
+| Alerte de bout en bout (capture) | **Déjà prouvée au module 1** pour le SOS : bouton, MQTT, pont, backend, tableau de bord, en moins d'une seconde ([vidéo de 39 s](../firmware/m1_wokwi/docs/demo-chaine-complete.mp4), [capture](../firmware/m1_wokwi/docs/dashboard.png)). **À capturer pour le Projet 1** : la chute (niveau 4) et le bracelet retiré (niveau 2) sur le tableau de bord. |
+| Autonomie calculée (calculateur du module 2) et hypothèses | Classeur rempli : [`calculateur_autonomie_eq05.xlsx`](calculateur_autonomie_eq05.xlsx), onglet « Cas équipe ». Détail ci-dessous. |
+
+**Autonomie : les chiffres** (calculateur M2-4, coefficient de marge 0,75, valeurs de la fiche ESP32 d'Espressif)
+
+| Scénario | Courant moyen | LiPo 1000 mAh, carte basse conso | LiPo 1000 mAh, DevKit | Bracelet 300 mAh (**hypothèse**) |
+| --- | --- | --- | --- | --- |
+| Prototype actuel : Wi-Fi toujours connecté, envoi toutes les 2 s (onglet S1) | 33,6 mA | **0,9 jour** | 0,8 jour | 0,3 jour |
+| **Retenu** : BLE, FC et SpO2 toutes les 5 min (mesure de 10 s), sommeil profond entre deux mesures (onglet « Cas équipe ») | 2,1 mA | **15,0 jours** | 4,4 jours | **4,5 jours** |
+| Même chose, mesure PPG de 5 s | 1,25 mA | 24,9 jours | 5,0 jours | 7,5 jours |
+| Même chose, FC et SpO2 toutes les 15 min | 0,7 mA | 44,3 jours | 5,5 jours | 13,3 jours |
+| Retenu + accéléromètre MPU-6050 allumé en continu, accéléromètre seul (≈ 0,5 mA, **à vérifier** sur la fiche) | 2,6 mA | 12,1 jours | 4,1 jours | 3,6 jours |
+| Retenu + MPU-6050 accéléromètre **et gyroscope** (3,9 mA, valeur du calculateur) | 6,0 mA | 5,2 jours | 2,8 jours | 1,6 jour |
+
+**Les hypothèses, et ce qu'elles valent :**
+
+1. **Période de 5 min pour FC et SpO2.** Un malaise est vu en 5 min au plus, contre une ronde toutes les 2 h aujourd'hui (**hypothèse** de la partie 1). La **chute ne dépend pas de cette période** : c'est l'accéléromètre qui réveille la carte sur un choc. Cette période est à valider avec le médecin coordonnateur. Elle pourrait se resserrer automatiquement après une chute ou une valeur anormale.
+2. **BLE plutôt que Wi-Fi** : 15,0 jours contre 12,2 jours au même rythme. Surtout, un bracelet par résident en Wi-Fi charge le réseau de l'établissement. Il faut donc une passerelle par chambre ou par couloir (partie 3).
+3. **La carte compte autant que la puce** : sur une carte de développement (DevKit), le régulateur consomme environ 5 mA en permanence et l'autonomie plafonne à 4 à 6 jours, quoi qu'on fasse. Le vrai produit a besoin d'une électronique basse consommation, c'est un argument de plus pour acheter le bracelet (partie 3.2).
+4. **L'accéléromètre doit rester allumé** pour ne rater aucun choc. Le MPU-6050 du kit, gyroscope compris, ramène l'autonomie à 5 jours : il faut couper le gyroscope, ou mieux, un accéléromètre qui détecte lui-même le choc et réveille la carte (quelques µA).
+5. **Le bracelet de 300 mAh n'atteint pas l'objectif de 7 jours** avec une mesure de 10 s (4,5 jours). Il faut soit une mesure plus courte (5 s : 7,5 jours), soit une période plus longue (15 min : 13,3 jours). C'est un compromis entre délai de détection d'un malaise et autonomie, à trancher avec les soignants.
+6. **Ce que le calcul ne voit pas** : la durée réelle d'une mesure PPG fiable, le courant des LED du MAX30102, le coût réel d'une connexion BLE, le froid et le vieillissement de la batterie. **Tout cela se mesure au Projet 2**, avec le vrai kit.
 
 ---
 
@@ -269,12 +287,10 @@ _À remplir avant le 13 novembre._
 
 > **Bilan (16:30-17:00)** : écrivez vos 3 tâches, puis déposez le dossier dans `projet1/` avant 18:00.
 
-_À remplir avant le 13 novembre._
-
 | Tâche | Qui | Pour quand |
 | --- | --- | --- |
-| | | |
-| | | |
-| | | |
+| **Les vraies données, chiffrées.** Enregistrer la série complète avec phyphox (10 lâchers sur coussin, puis 1 h de vie courante : marche, assis, allongé ; protocole dans [`donnees/README.md`](donnees/README.md)). Lancer [`traitement/analyse_chutes.py`](traitement/analyse_chutes.py), reporter en 4.2 les chutes détectées, les fausses alertes par heure et la figure, et comparer avec le signal simulé dans Wokwi. | Titouan Brunet (risques et données) | Semaine du 2 novembre 2026 ; au plus tard le vendredi 13 novembre |
+| **L'alerte de bout en bout, en capture.** Publier le projet Wokwi P1 sur le compte de l'équipe, lancer la stack et montrer sur le tableau de bord une chute (niveau 4), un bracelet retiré (niveau 2) et un SOS (niveau 5). Faire les captures pour 4.1 et 4.3, et une première version de la vidéo de secours (2 à 3 min, avec la voix). | Cedric Usannaz (pilote et technique) | Vendredi 13 novembre 2026 |
+| **Le capteur et l'autonomie, argumentés.** Comparer 3 bracelets médicaux marqués CE sur les critères de 3.2 (accès à l'accélération autour d'un choc, BLE standard, autonomie, étanchéité, classe et organisme notifié). Reporter la batterie du meilleur dans le calculateur. Faire valider la période de 5 min et le seuil de 30 min « bracelet non porté » par un soignant, ou les marquer « hypothèse ». | Fares Mansour (réglementaire) | Vendredi 13 novembre 2026 |
 
 _Le 13 novembre, on ajoutera deux parties : l'analyse de risques et l'analyse d'impact sur les données personnelles (AIPD)._
