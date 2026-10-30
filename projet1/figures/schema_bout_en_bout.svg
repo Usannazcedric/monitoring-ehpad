@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .box { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.2; }
+      .box2 { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.2; stroke-dasharray: 5 4; }
+      .head { font-size: 14px; font-weight: 700; fill: #0f172a; }
+      .t { font-size: 11.5px; fill: #1e293b; }
+      .warn { font-size: 11.5px; fill: #b91c1c; font-weight: 700; }
+      .lane { font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.06em; }
+      .note { font-size: 11.5px; fill: #475569; }
+      .flow { stroke: #475569; stroke-width: 1.6; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="#ffffff"/>
+
+  <text x="25" y="38" font-size="20" font-weight="700" fill="#0f172a">Veilleur : du capteur à l'alerte</text>
+  <text x="25" y="58" class="note">Projet 1, cas A (chute en EHPAD), équipe 05. Données fictives.</text>
+
+  <!-- Légende -->
+  <g transform="translate(640,30)">
+    <circle cx="6" cy="0" r="5" fill="#2563eb"/><text x="16" y="4" class="t">MBA 1 (Digi4, avril 2026)</text>
+    <circle cx="186" cy="0" r="5" fill="#0d9488"/><text x="196" y="4" class="t">Module 1 du MBA 2 (oct. 2026)</text>
+    <circle cx="6" cy="22" r="5" fill="#ea580c"/><text x="16" y="26" class="t">Ajouté au Projet 1 (30 oct.)</text>
+    <circle cx="186" cy="22" r="5" fill="#94a3b8"/><text x="196" y="26" class="t">Vrai produit : à construire ou acheter</text>
+  </g>
+
+  <!-- ===================== LIGNE 1 : PROTOTYPE ===================== -->
+  <text x="25" y="100" class="lane">PROTOTYPE : CE QUI TOURNE AUJOURD'HUI</text>
+
+  <!-- 1. Capteurs -->
+  <rect x="25" y="112" width="170" height="268" rx="8" class="box"/>
+  <text x="37" y="134" class="head">1. Capteurs</text>
+  <circle cx="41" cy="152" r="4" fill="#2563eb"/>
+  <text class="t"><tspan x="50" y="156">Simulateur Python :</tspan><tspan x="50" dy="15">20 résidents, FC, SpO2,</tspan><tspan x="50" dy="15">tension, T°, mouvement,</tspan><tspan x="50" dy="15">présence, porte</tspan></text>
+  <circle cx="41" cy="227" r="4" fill="#0d9488"/>
+  <text class="t"><tspan x="50" y="231">Wokwi : MPU-6050,</tspan><tspan x="50" dy="15">potentiomètre (≈ FC),</tspan><tspan x="50" dy="15">bouton SOS</tspan></text>
+  <circle cx="41" cy="287" r="4" fill="#ea580c"/>
+  <text class="t"><tspan x="50" y="291">Interrupteur « porté »,</tspan><tspan x="50" dy="15">détecteur de présence,</tspan><tspan x="50" dy="15">porte de chambre</tspan></text>
+  <circle cx="41" cy="347" r="4" fill="#ea580c"/>
+  <text class="t"><tspan x="50" y="351">Vraies données :</tspan><tspan x="50" dy="15">téléphone (phyphox)</tspan></text>
+
+  <!-- 2. Carte -->
+  <rect x="221" y="112" width="170" height="268" rx="8" class="box"/>
+  <text x="233" y="134" class="head">2. Carte</text>
+  <circle cx="237" cy="152" r="4" fill="#0d9488"/>
+  <text class="t"><tspan x="246" y="156">ESP32 simulé (Wokwi),</tspan><tspan x="246" dy="15">résident R021, ch. 121</tspan><tspan x="246" dy="15">mêmes seuils que le</tspan><tspan x="246" dy="15">backend, buzzer local</tspan></text>
+  <circle cx="237" cy="227" r="4" fill="#ea580c"/>
+  <text class="t"><tspan x="246" y="231">Chute = choc, puis</tspan><tspan x="246" dy="15">immobilité, puis</tspan><tspan x="246" dy="15">allongé (TP M2-2)</tspan></text>
+  <circle cx="237" cy="287" r="4" fill="#ea580c"/>
+  <text class="t"><tspan x="246" y="291">FC instable ou bracelet</tspan><tspan x="246" dy="15">retiré : mesure non</tspan><tspan x="246" dy="15">envoyée (TP M2-1)</tspan></text>
+
+  <!-- 3. Réseau -->
+  <rect x="417" y="112" width="170" height="268" rx="8" class="box"/>
+  <text x="429" y="134" class="head">3. Réseau</text>
+  <circle cx="433" cy="152" r="4" fill="#0d9488"/>
+  <text class="t"><tspan x="442" y="156">Wi-Fi puis MQTT :</tspan><tspan x="442" dy="15">broker.hivemq.com:1883</tspan></text>
+  <text class="warn"><tspan x="442" y="186">public, sans TLS,</tspan><tspan x="442" dy="15">sans mot de passe</tspan></text>
+  <circle cx="433" cy="227" r="4" fill="#0d9488"/>
+  <text class="t"><tspan x="442" y="231">Pont Mosquitto à</tspan><tspan x="442" dy="15">sens unique vers le</tspan><tspan x="442" dy="15">broker local</tspan></text>
+  <circle cx="433" cy="287" r="4" fill="#2563eb"/>
+  <text class="t"><tspan x="442" y="291">Mosquitto local,</tspan><tspan x="442" dy="15">topics ehpad/…</tspan><tspan x="442" dy="15">(contrat MQTT)</tspan></text>
+
+  <!-- 4. Cloud -->
+  <rect x="613" y="112" width="170" height="268" rx="8" class="box"/>
+  <text x="625" y="134" class="head">4. « Cloud »</text>
+  <circle cx="629" cy="152" r="4" fill="#2563eb"/>
+  <text class="t"><tspan x="638" y="156">Aucun cloud : Docker</tspan><tspan x="638" dy="15">sur un portable</tspan><tspan x="638" dy="15">FastAPI, Redis,</tspan><tspan x="638" dy="15">InfluxDB (30 jours),</tspan><tspan x="638" dy="15">Ollama (LLM local)</tspan></text>
+  <text class="warn"><tspan x="638" y="246">Non HDS :</tspan><tspan x="638" dy="15">données fictives</tspan><tspan x="638" dy="15">seulement</tspan></text>
+
+  <!-- 5. Tableau de bord -->
+  <rect x="809" y="112" width="170" height="268" rx="8" class="box"/>
+  <text x="821" y="134" class="head">5. Tableau de bord</text>
+  <circle cx="825" cy="152" r="4" fill="#2563eb"/>
+  <text class="t"><tspan x="834" y="156">React : grille des</tspan><tspan x="834" dy="15">résidents, fiche et</tspan><tspan x="834" dy="15">courbes, journal</tspan><tspan x="834" dy="15">d'alertes, plan d'étage</tspan></text>
+  <text class="warn"><tspan x="834" y="231">Sans authentification</tspan></text>
+
+  <!-- 6. Alertes -->
+  <rect x="1005" y="112" width="170" height="268" rx="8" class="box"/>
+  <text x="1017" y="134" class="head">6. Alertes</text>
+  <circle cx="1021" cy="152" r="4" fill="#2563eb"/>
+  <text class="t"><tspan x="1030" y="156">Moteur à 5 niveaux,</tspan><tspan x="1030" dy="15">escalade automatique,</tspan><tspan x="1030" dy="15">toast dans l'onglet</tspan><tspan x="1030" dy="15">du navigateur</tspan></text>
+  <circle cx="1021" cy="227" r="4" fill="#0d9488"/>
+  <text class="t"><tspan x="1030" y="231">Buzzer de la carte,</tspan><tspan x="1030" dy="15">appel SOS (niveau 5)</tspan></text>
+  <text class="warn"><tspan x="1017" y="290">Reçue par : la</tspan><tspan x="1017" dy="15">personne devant</tspan><tspan x="1017" dy="15">l'écran (la nuit,</tspan><tspan x="1017" dy="15">personne)</tspan></text>
+
+  <!-- flèches ligne 1 -->
+  <line x1="196" y1="246" x2="219" y2="246" class="flow" marker-end="url(#arr)"/>
+  <line x1="392" y1="246" x2="415" y2="246" class="flow" marker-end="url(#arr)"/>
+  <line x1="588" y1="246" x2="611" y2="246" class="flow" marker-end="url(#arr)"/>
+  <line x1="784" y1="246" x2="807" y2="246" class="flow" marker-end="url(#arr)"/>
+  <line x1="980" y1="246" x2="1003" y2="246" class="flow" marker-end="url(#arr)"/>
+
+  <!-- transition -->
+  <line x1="600" y1="392" x2="600" y2="428" class="flow" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+  <text x="612" y="415" class="note">Ce qui sépare les deux lignes : tableau des écarts 3.3 (8 sujets). Le kit réel arrive au Projet 2.</text>
+
+  <!-- ===================== LIGNE 2 : VRAI PRODUIT ===================== -->
+  <text x="25" y="452" class="lane">VRAI PRODUIT : LA CIBLE</text>
+
+  <rect x="25" y="464" width="170" height="164" rx="8" class="box2"/>
+  <text x="37" y="486" class="head">1. Capteurs</text>
+  <text class="t"><tspan x="37" y="508">Bracelet médical CE</tspan><tspan x="37" dy="15">(acheté) : PPG FC et</tspan><tspan x="37" dy="15">SpO2, accéléromètre</tspan><tspan x="37" dy="15">basse conso, détection</tspan><tspan x="37" dy="15">de port, bouton d'appel</tspan><tspan x="37" dy="23">Chambre : présence au</tspan><tspan x="37" dy="15">lit, porte (du commerce)</tspan></text>
+
+  <rect x="221" y="464" width="170" height="164" rx="8" class="box2"/>
+  <text x="233" y="486" class="head">2. Électronique</text>
+  <text class="t"><tspan x="233" y="508">Celle du bracelet</tspan><tspan x="233" dy="15">(fabricant), réveillée</tspan><tspan x="233" dy="15">par un choc</tspan><tspan x="233" dy="23">Passerelle BLE par</tspan><tspan x="233" dy="15">chambre ou couloir :</tspan><tspan x="233" dy="15">notre règle de chute</tspan><tspan x="233" dy="15">y tourne</tspan></text>
+
+  <rect x="417" y="464" width="170" height="164" rx="8" class="box2"/>
+  <text x="429" y="486" class="head">3. Réseau</text>
+  <text class="t"><tspan x="429" y="508">BLE, puis réseau de</tspan><tspan x="429" dy="15">l'établissement (réseau</tspan><tspan x="429" dy="15">dédié), secours 4G</tspan><tspan x="429" dy="23">MQTT sur TLS,</tspan><tspan x="429" dy="15">certificat par appareil,</tspan><tspan x="429" dy="15">messages gardés et</tspan><tspan x="429" dy="15">renvoyés après coupure</tspan></text>
+
+  <rect x="613" y="464" width="170" height="164" rx="8" class="box2"/>
+  <text x="625" y="486" class="head">4. Cloud HDS</text>
+  <text class="t"><tspan x="625" y="508">Hébergeur certifié</tspan><tspan x="625" dy="15">données de santé</tspan><tspan x="625" dy="15">(France ou UE)</tspan><tspan x="625" dy="23">Chiffrement,</tspan><tspan x="625" dy="15">sauvegardes, journal</tspan><tspan x="625" dy="15">d'audit, durée de</tspan><tspan x="625" dy="15">conservation définie</tspan></text>
+
+  <rect x="809" y="464" width="170" height="164" rx="8" class="box2"/>
+  <text x="821" y="486" class="head">5. Tableau de bord</text>
+  <text class="t"><tspan x="821" y="508">Web authentifié, rôles</tspan><tspan x="821" dy="15">(soignant, infirmier,</tspan><tspan x="821" dy="15">opérateur), journal</tspan><tspan x="821" dy="15">de qui acquitte</tspan><tspan x="821" dy="23">Poste de soins et</tspan><tspan x="821" dy="15">tablette ; export FHIR</tspan><tspan x="821" dy="15">vers le dossier de soins</tspan></text>
+
+  <rect x="1005" y="464" width="170" height="164" rx="8" class="box2"/>
+  <text x="1017" y="486" class="head">6. Alertes</text>
+  <text class="t"><tspan x="1017" y="508">Téléphone ou DECT du</tspan><tspan x="1017" dy="15">soignant de garde,</tspan><tspan x="1017" dy="15">puis infirmier, puis</tspan><tspan x="1017" dy="15">opérateur de télé-</tspan><tspan x="1017" dy="15">surveillance, puis le 15</tspan><tspan x="1017" dy="23">Famille : message le</tspan><tspan x="1017" dy="15">jour même, sans jargon</tspan></text>
+
+  <!-- flèches ligne 2 -->
+  <line x1="196" y1="546" x2="219" y2="546" class="flow" marker-end="url(#arr)"/>
+  <line x1="392" y1="546" x2="415" y2="546" class="flow" marker-end="url(#arr)"/>
+  <line x1="588" y1="546" x2="611" y2="546" class="flow" marker-end="url(#arr)"/>
+  <line x1="784" y1="546" x2="807" y2="546" class="flow" marker-end="url(#arr)"/>
+  <line x1="980" y1="546" x2="1003" y2="546" class="flow" marker-end="url(#arr)"/>
+
+  <text x="25" y="664" class="note">Les flèches suivent les données. Le pont Mosquitto est à sens unique : rien de ce qui circule en local ne repart vers le broker public.</text>
+  <text x="25" y="682" class="note">Détail du prototype : docs/architecture.md et docs/contrat_mqtt.md. Écarts cotés : docs/etat-des-lieux.pdf.</text>
+</svg>

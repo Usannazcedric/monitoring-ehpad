@@ -19,6 +19,7 @@ Ce dépôt **continue** le projet de l'an dernier (Digi4), archivé tel quel sur
 | Architecture et écarts avec un produit fini (16 écarts cotés) | [`docs/etat-des-lieux.pdf`](docs/etat-des-lieux.pdf) · [version web](docs/etat-des-lieux.html) |
 | Contrat MQTT — correspondance Digi4 → Digi5 | [`docs/contrat_mqtt.md`](docs/contrat_mqtt.md) |
 | Module 1 — firmware ESP32 qui remplace le simulateur Python | [`firmware/m1_wokwi/`](firmware/m1_wokwi/) |
+| Projet 1 — firmware ESP32 avec les capteurs du cas A (port du bracelet, présence, porte) et la règle de chute du TP M2-2 | [`firmware/p1_wokwi/`](firmware/p1_wokwi/) |
 | Simulation Wokwi de la carte | [wokwi.com/projects/476778339332099073](https://wokwi.com/projects/476778339332099073) |
 | Démonstration vidéo — carte ESP32 → dashboard (39 s) | [`firmware/m1_wokwi/docs/demo-chaine-complete.mp4`](firmware/m1_wokwi/docs/demo-chaine-complete.mp4) |
 
@@ -219,15 +220,17 @@ curl -X POST http://localhost:9100/scenario/R002 \
 │       └── store/        # Zustand
 ├── mosquitto/            # config MQTT
 ├── firmware/
-│   └── m1_wokwi/         # Module 1 Digi5 : firmware ESP32 (remplace le simulateur)
-│       ├── diagram.json  # montage Wokwi : MPU-6050, bouton SOS, buzzer, potentiomètre
-│       ├── libraries.txt
-│       ├── sketch.ino
-│       ├── wokwi.toml    # simulation locale via l'extension Wokwi for VS Code
-│       ├── build.sh      # compilation locale (arduino-cli), contourne la file Wokwi
-│       └── docs/         # démonstration vidéo et captures d'écran
+│   ├── m1_wokwi/         # Module 1 Digi5 : firmware ESP32 (remplace le simulateur)
+│   │   ├── diagram.json  # montage Wokwi : MPU-6050, bouton SOS, buzzer, potentiomètre
+│   │   ├── libraries.txt
+│   │   ├── sketch.ino
+│   │   ├── wokwi.toml    # simulation locale via l'extension Wokwi for VS Code
+│   │   ├── build.sh      # compilation locale (arduino-cli), contourne la file Wokwi
+│   │   └── docs/         # démonstration vidéo et captures d'écran
+│   └── p1_wokwi/         # Projet 1 : + port du bracelet, présence, porte, règle de chute
 ├── projet1/              # MBA 2 — dossier de cadrage du Projet 1 (cas A, chute)
 │   ├── dossier_cadrage.md
+│   ├── figures/          # schéma de bout en bout
 │   └── donnees/          # vraies données enregistrées (exercice 4)
 ├── analyses/             # TP des modules 2 et 3, un dossier par TP
 ├── docker-compose.yml
