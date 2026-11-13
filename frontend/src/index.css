@@ -4,17 +4,65 @@
 
 html, body, #root { height: 100%; }
 
+/* Thème clair (par défaut) : fond gris très pâle, cartes blanches, texte presque noir.
+   L'échelle « zinc » est inversée : zinc-950 est le fond, zinc-100 le texte. */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --zinc-50: 9 9 11;
+  --zinc-100: 24 24 27;
+  --zinc-200: 39 39 42;
+  --zinc-300: 63 63 70;
+  --zinc-400: 82 82 91;
+  --zinc-500: 113 113 122;
+  --zinc-600: 161 161 170;
+  --zinc-700: 228 228 231;
+  --zinc-800: 241 241 243;
+  --zinc-900: 255 255 255;
+  --zinc-950: 250 250 250;
+  --strong: 9 9 11;
+}
+
+/* Thème sombre : pour la nuit, sans éblouir. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --zinc-50: 250 250 251;
+  --zinc-100: 240 241 243;
+  --zinc-200: 222 224 228;
+  --zinc-300: 196 199 205;
+  --zinc-400: 148 152 161;
+  --zinc-500: 113 118 128;
+  --zinc-600: 75 79 87;
+  --zinc-700: 42 44 49;
+  --zinc-800: 28 29 33;
+  --zinc-900: 18 18 21;
+  --zinc-950: 10 10 12;
+  --strong: 250 250 251;
+}
+
 @layer base {
   body {
     @apply bg-zinc-950 text-zinc-100 antialiased;
     font-feature-settings: "cv11", "ss01";
   }
-  ::selection { @apply bg-brand-600/40 text-white; }
-  :focus-visible { @apply outline-none ring-2 ring-brand-400 ring-offset-2 ring-offset-zinc-950; }
+  h1, h2, h3 { letter-spacing: -0.02em; }
+  ::selection { @apply bg-brand-500/30; }
+  :focus-visible { @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-zinc-950; }
 }
 
 @layer utilities {
   /* Chiffres alignés : les constantes ne « dansent » pas quand elles changent. */
   .tabular { font-variant-numeric: tabular-nums; }
-  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: theme("colors.zinc.700") transparent; }
+  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: rgb(var(--zinc-700)) transparent; }
+  /* Blanc vrai, pour le texte posé sur une couleur pleine (pastille Danger vital). */
+  .text-pure-white { color: #fff; }
 }
+
+/* En thème clair, les couleurs d'état pâles (pensées pour le fond sombre) sont
+   foncées pour rester lisibles sur du blanc. */
+:root:not([data-theme="dark"]) :is(.text-emerald-200, .text-emerald-300, .text-emerald-400, .text-green-300, .text-green-400, .text-green-500) { color: #047857; }
+:root:not([data-theme="dark"]) :is(.text-amber-200, .text-amber-300, .text-amber-400, .text-yellow-300, .text-yellow-400) { color: #b45309; }
+:root:not([data-theme="dark"]) :is(.text-orange-300, .text-orange-400) { color: #c2410c; }
+:root:not([data-theme="dark"]) :is(.text-rose-200, .text-rose-300, .text-rose-400, .text-red-300, .text-red-400, .text-red-500) { color: #be123c; }
+:root:not([data-theme="dark"]) :is(.text-sky-300, .text-sky-400, .text-blue-300, .text-blue-400) { color: #0369a1; }
+:root:not([data-theme="dark"]) :is(.text-brand-200, .text-brand-300, .text-brand-400) { color: #0f766e; }

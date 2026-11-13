@@ -14,7 +14,7 @@ export default function App() {
   return (
     <div className="min-h-full">
       <NavBar />
-      <main className="lg:pl-64">
+      <main className="lg:pl-60">
         <Routes>
           <Route path="/" element={<GridPage />} />
           <Route path="/resident/:id" element={<ResidentDetail />} />

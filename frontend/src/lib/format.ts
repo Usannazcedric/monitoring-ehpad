@@ -40,14 +40,15 @@ export const LEVEL_COLORS: Record<number, string> = {
   5: "bg-level-5",
 };
 
-/** Styles par niveau : pastille, contour de carte, barre latérale, texte. */
+/** Styles par niveau : pastille, contour de carte, barre latérale, texte. Teintes discrètes,
+ *  lisibles en thème clair comme en sombre ; seul « Danger vital » est en couleur pleine. */
 export const LEVEL_STYLE: Record<number, { pill: string; ring: string; bar: string; text: string; dot: string }> = {
-  0: { pill: "bg-zinc-800 text-zinc-300 ring-zinc-700", ring: "ring-zinc-800", bar: "bg-zinc-700", text: "text-zinc-400", dot: "bg-emerald-400" },
-  1: { pill: "bg-sky-500/15 text-sky-300 ring-sky-500/40", ring: "ring-sky-500/50", bar: "bg-level-1", text: "text-sky-300", dot: "bg-level-1" },
-  2: { pill: "bg-amber-400/15 text-amber-300 ring-amber-400/40", ring: "ring-amber-400/60", bar: "bg-level-2", text: "text-amber-300", dot: "bg-level-2" },
-  3: { pill: "bg-orange-400/15 text-orange-300 ring-orange-400/50", ring: "ring-orange-400/70", bar: "bg-level-3", text: "text-orange-300", dot: "bg-level-3" },
-  4: { pill: "bg-rose-500/20 text-rose-200 ring-rose-500/60", ring: "ring-rose-500", bar: "bg-level-4", text: "text-rose-300", dot: "bg-level-4" },
-  5: { pill: "bg-red-600 text-white ring-red-300/70", ring: "ring-red-500", bar: "bg-level-5", text: "text-red-300", dot: "bg-level-5" },
+  0: { pill: "bg-zinc-800 text-zinc-400 ring-zinc-700", ring: "ring-transparent", bar: "bg-transparent", text: "text-zinc-400", dot: "bg-emerald-500" },
+  1: { pill: "bg-sky-500/10 text-sky-400 ring-sky-500/25", ring: "ring-sky-500/30", bar: "bg-level-1", text: "text-sky-400", dot: "bg-level-1" },
+  2: { pill: "bg-amber-500/10 text-amber-400 ring-amber-500/30", ring: "ring-amber-500/40", bar: "bg-level-2", text: "text-amber-400", dot: "bg-level-2" },
+  3: { pill: "bg-orange-500/10 text-orange-400 ring-orange-500/30", ring: "ring-orange-500/40", bar: "bg-level-3", text: "text-orange-400", dot: "bg-level-3" },
+  4: { pill: "bg-rose-500/10 text-rose-400 ring-rose-500/30", ring: "ring-rose-500/40", bar: "bg-level-4", text: "text-rose-400", dot: "bg-level-4" },
+  5: { pill: "bg-level-5 text-pure-white ring-level-5", ring: "ring-level-5/50", bar: "bg-level-5", text: "text-red-400", dot: "bg-level-5" },
 };
 
 export const LEVEL_DESCRIPTIONS: Record<number, string> = {

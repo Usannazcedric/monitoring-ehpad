@@ -104,8 +104,8 @@ function BraceletDrawing({ state }: { state: BraceletState }) {
 
 function Feature({ icon: Icon, title, text }: { icon: typeof Activity; title: string; text: string }) {
   return (
-    <div className="flex gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-500/15 text-brand-300">
+    <div className="flex gap-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-800 text-zinc-300">
         <Icon className="h-[18px] w-[18px]" />
       </span>
       <div>
@@ -148,24 +148,24 @@ export function BraceletPage() {
   const norm = m ? Math.sqrt(m.ax ** 2 + m.ay ** 2 + m.az ** 2) / 9.80665 : null;
 
   return (
-    <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-6xl space-y-6">
+    <div className="px-4 py-6 sm:px-10 sm:py-10 max-w-6xl space-y-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Bracelet Veilleur</h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <h1 className="text-[26px] font-semibold tracking-tight text-white">Bracelet Veilleur</h1>
+        <p className="mt-1 text-[14px] text-zinc-500">
           Ce que porte la résidente : pas d'écran, un anneau lumineux, un bouton d'appel et un bouton pour annuler une fausse alerte.
           Maquette de ce qu'on attend du bracelet acheté (dossier, partie 3.2).
         </p>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-        <section className="rounded-2xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900 to-zinc-950 p-6">
+        <section className="rounded-xl border border-zinc-700 bg-zinc-900 p-6">
           <div className="flex flex-wrap gap-1.5">
             {PREVIEWS.map((p) => (
               <button
                 key={p.key}
                 onClick={() => setPreview(p.key)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset transition ${
-                  preview === p.key ? "bg-brand-500 text-zinc-950 ring-brand-400" : "bg-zinc-900 text-zinc-400 ring-zinc-800 hover:text-zinc-200"
+                className={`rounded-md px-2.5 py-1 text-[12px] font-medium ring-1 ring-inset transition ${
+                  preview === p.key ? "bg-zinc-100 text-zinc-950 ring-zinc-100" : "bg-zinc-900 text-zinc-400 ring-zinc-700 hover:text-zinc-200"
                 }`}
               >
                 {p.key === "live" && <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 align-middle" />}
@@ -176,7 +176,7 @@ export function BraceletPage() {
           <div className="mt-6 flex justify-center">
             <BraceletDrawing state={shown} />
           </div>
-          <div className="mt-6 rounded-xl bg-zinc-950/70 p-4 ring-1 ring-zinc-800 text-center">
+          <div className="mt-6 rounded-xl bg-zinc-950 p-4 ring-1 ring-zinc-700 text-center">
             <div className="text-base font-semibold" style={{ color: st.ring }}>{st.label}</div>
             <div className="mt-1 text-xs text-zinc-400">{st.detail}</div>
             {preview !== "live" && (
@@ -186,10 +186,10 @@ export function BraceletPage() {
         </section>
 
         <div className="space-y-6">
-          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/70 p-5">
+          <section className="rounded-xl border border-zinc-700 bg-zinc-900 p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                <div className="flex items-center gap-2 text-[12px] font-medium text-emerald-500">
                   <Radio className="h-3.5 w-3.5" /> En direct · carte Wokwi
                 </div>
                 <Link to={`/resident/${BRACELET_RESIDENT}`} className="mt-1 block text-lg font-semibold text-white hover:underline">
@@ -201,21 +201,21 @@ export function BraceletPage() {
               </span>
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-              <div className="rounded-xl bg-zinc-950/60 p-3 ring-1 ring-zinc-800">
+              <div className="rounded-xl bg-zinc-950 p-3 ring-1 ring-zinc-700">
                 <dt className="text-[11px] text-zinc-500">Dernière mesure</dt>
                 <dd className="mt-1 font-semibold text-white tabular">{resident ? `il y a ${fmtRelative(resident.last_seen)}` : "—"}</dd>
               </div>
-              <div className="rounded-xl bg-zinc-950/60 p-3 ring-1 ring-zinc-800">
+              <div className="rounded-xl bg-zinc-950 p-3 ring-1 ring-zinc-700">
                 <dt className="text-[11px] text-zinc-500">Activité</dt>
                 <dd className={`mt-1 font-semibold ${isFallActivity(m?.activity) ? "text-rose-300" : "text-white"}`}>
                   {m?.activity ? ACTIVITY_LABELS[m.activity] ?? m.activity : "—"}
                 </dd>
               </div>
-              <div className="rounded-xl bg-zinc-950/60 p-3 ring-1 ring-zinc-800">
+              <div className="rounded-xl bg-zinc-950 p-3 ring-1 ring-zinc-700">
                 <dt className="text-[11px] text-zinc-500">Accélération (g)</dt>
                 <dd className="mt-1 font-semibold text-white tabular text-xs leading-5">x {g(m?.ax)} · y {g(m?.ay)} · z {g(m?.az)}</dd>
               </div>
-              <div className="rounded-xl bg-zinc-950/60 p-3 ring-1 ring-zinc-800">
+              <div className="rounded-xl bg-zinc-950 p-3 ring-1 ring-zinc-700">
                 <dt className="text-[11px] text-zinc-500">Norme</dt>
                 <dd className="mt-1 font-semibold text-white tabular">{norm !== null ? `${norm.toFixed(2)} g` : "—"}</dd>
               </div>
@@ -253,7 +253,7 @@ export function BraceletPage() {
             <Feature icon={ShieldCheck} title="Étanche et désinfectable" text="IP67 pour la douche, matériaux testés pour la peau (ISO 10993)." />
           </section>
 
-          <section className="flex gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-xs text-zinc-400">
+          <section className="flex gap-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-xs text-zinc-400">
             <Ban className="h-4 w-4 shrink-0 text-zinc-500" />
             <span>
               <span className="font-semibold text-zinc-200">Ce qu'il ne fait pas, exprès</span> : ni pouls ni oxygène (version 1 recentrée sur la chute),

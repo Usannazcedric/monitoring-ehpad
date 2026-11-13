@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BellRing, CircleCheck, Search, ShieldAlert, TriangleAlert, Users, WifiOff } from "lucide-react";
+import { ArrowRight, BellRing, CircleCheck, Search, ShieldAlert, Users, WifiOff } from "lucide-react";
 import { useStore, highestLevelFor } from "@/store/store";
 import { ResidentCard } from "@/components/ResidentCard";
 import { AlertBadge } from "@/components/AlertBadge";
@@ -32,17 +32,14 @@ function Kpi({ icon: Icon, label, value, tone, active, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-4 rounded-2xl border bg-zinc-900/70 px-4 py-4 text-left transition ${
-        active ? "border-brand-500/60 ring-1 ring-brand-500/40" : "border-zinc-800/80 hover:border-zinc-700"
+      className={`rounded-xl border bg-zinc-900 px-4 py-3.5 text-left transition-colors ${
+        active ? "border-zinc-500" : "border-zinc-700 hover:border-zinc-600"
       }`}
     >
-      <span className={`grid h-11 w-11 place-items-center rounded-xl ${tone}`}>
-        <Icon className="h-5 w-5" />
+      <span className="flex items-center gap-1.5 text-[13px] text-zinc-500">
+        <Icon className={`h-3.5 w-3.5 ${tone}`} /> {label}
       </span>
-      <span>
-        <span className="block text-2xl font-bold text-white tabular leading-none">{value}</span>
-        <span className="mt-1 block text-xs text-zinc-400">{label}</span>
-      </span>
+      <span className="mt-1.5 block text-[28px] font-semibold text-white tabular leading-none tracking-tight">{value}</span>
     </button>
   );
 }
@@ -93,7 +90,7 @@ export function GridPage() {
   if (rows.length === 0) {
     return (
       <div className="p-12 flex flex-col items-center gap-3 text-zinc-400">
-        <div className="h-8 w-8 border-4 border-zinc-700 border-t-brand-400 rounded-full animate-spin" />
+        <div className="h-6 w-6 border-2 border-zinc-700 border-t-zinc-300 rounded-full animate-spin" />
         <div className="text-lg font-medium text-zinc-200">Connexion aux capteurs en cours…</div>
         <div className="text-sm">Les données des résidents arrivent dans quelques secondes.</div>
       </div>
@@ -101,30 +98,30 @@ export function GridPage() {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-8 sm:py-8 space-y-6 max-w-[1600px]">
+    <div className="px-4 py-6 sm:px-10 sm:py-10 space-y-8 max-w-[1440px]">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Tableau de bord</h1>
-          <p className="mt-1 text-sm text-zinc-400">
+          <h1 className="text-[26px] font-semibold tracking-tight text-white">Tableau de bord</h1>
+          <p className="mt-1 text-[14px] text-zinc-500">
             Les chambres qui demandent une intervention passent en premier.
           </p>
         </div>
       </header>
 
       <section className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-        <Kpi icon={Users} label="Résidents surveillés" value={stats.total} tone="bg-zinc-800 text-zinc-200" active={filter === "tous"} onClick={() => setFilter("tous")} />
-        <Kpi icon={ShieldAlert} label="Urgences en cours" value={stats.urgent} tone="bg-rose-500/15 text-rose-300" active={filter === "alertes"} onClick={() => setFilter("alertes")} />
-        <Kpi icon={BellRing} label="À vérifier" value={stats.toCheck} tone="bg-amber-400/15 text-amber-300" active={false} onClick={() => setFilter("alertes")} />
-        <Kpi icon={WifiOff} label="Capteurs muets" value={stats.silent} tone="bg-zinc-800 text-amber-300" active={filter === "muets"} onClick={() => setFilter("muets")} />
+        <Kpi icon={Users} label="Résidents surveillés" value={stats.total} tone="text-zinc-400" active={filter === "tous"} onClick={() => setFilter("tous")} />
+        <Kpi icon={ShieldAlert} label="Urgences en cours" value={stats.urgent} tone="text-rose-400" active={filter === "alertes"} onClick={() => setFilter("alertes")} />
+        <Kpi icon={BellRing} label="À vérifier" value={stats.toCheck} tone="text-amber-400" active={false} onClick={() => setFilter("alertes")} />
+        <Kpi icon={WifiOff} label="Capteurs muets" value={stats.silent} tone="text-zinc-400" active={filter === "muets"} onClick={() => setFilter("muets")} />
       </section>
 
       {priority.length > 0 ? (
-        <section className="rounded-2xl border border-rose-500/30 bg-gradient-to-r from-rose-500/10 via-zinc-900/70 to-zinc-900/70 p-4 sm:p-5">
+        <section>
           <div className="flex items-center justify-between gap-3 mb-3">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-rose-200">
-              <TriangleAlert className="h-4 w-4" /> À traiter maintenant
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-white">
+              <span className="h-2 w-2 rounded-full bg-rose-500 animate-soft-pulse" /> À traiter maintenant
             </h2>
-            <Link to="/alerts" className="inline-flex items-center gap-1 text-xs font-medium text-zinc-300 hover:text-white">
+            <Link to="/alerts" className="inline-flex items-center gap-1 text-[13px] text-zinc-500 hover:text-white">
               Toutes les alertes <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -133,17 +130,17 @@ export function GridPage() {
               const info = residentInfo(a.resident_id);
               const st = LEVEL_STYLE[a.level] ?? LEVEL_STYLE[0];
               return (
-                <div key={a.id} className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 pl-5">
-                  <span className={`absolute inset-y-0 left-0 w-1 ${st.bar}`} />
+                <div key={a.id} className="relative overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 p-4 pl-5">
+                  <span className={`absolute inset-y-0 left-0 w-[3px] ${st.bar}`} />
                   <div className="flex items-start justify-between gap-2">
                     <Link to={`/resident/${a.resident_id}`} className="min-w-0">
-                      <div className="text-xs text-zinc-500">Chambre</div>
-                      <div className="text-3xl font-bold text-white tabular leading-none">{info.room}</div>
-                      <div className="mt-1 text-sm text-zinc-300 truncate">{info.name}</div>
+                      <div className="text-[13px] text-zinc-500">Chambre</div>
+                      <div className="text-[28px] font-semibold text-white tabular leading-tight tracking-tight">{info.room}</div>
+                      <div className="text-[13px] text-zinc-400 truncate">{info.name}</div>
                     </Link>
                     <AlertBadge level={a.level} />
                   </div>
-                  <div className="mt-3 text-sm font-medium text-white">{reasonLabel(a.reason)}</div>
+                  <div className="mt-3 text-[14px] font-medium text-white">{reasonLabel(a.reason)}</div>
                   <div className="mt-0.5 text-xs text-zinc-500">il y a {fmtRelative(a.created_at)}</div>
                   <div className="mt-3">
                     <AckButton alert={a} compact />
@@ -154,20 +151,20 @@ export function GridPage() {
           </div>
         </section>
       ) : (
-        <section className="flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4 text-sm text-emerald-200">
-          <CircleCheck className="h-5 w-5" /> Aucune urgence en cours : toutes les chambres sont sous surveillance.
+        <section className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-[14px] text-zinc-300">
+          <CircleCheck className="h-5 w-5 text-emerald-500" /> Aucune urgence en cours : toutes les chambres sont sous surveillance.
         </section>
       )}
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex rounded-xl bg-zinc-900 p-1 ring-1 ring-zinc-800">
+          <div className="inline-flex rounded-lg bg-zinc-800 p-0.5">
             {FILTERS.map((f) => (
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                  filter === f.key ? "bg-zinc-700 text-white shadow" : "text-zinc-400 hover:text-zinc-200"
+                className={`rounded-md px-3 py-1 text-[13px] font-medium transition ${
+                  filter === f.key ? "bg-zinc-900 text-white shadow-sm ring-1 ring-zinc-700" : "text-zinc-500 hover:text-zinc-200"
                 }`}
               >
                 {f.label}
@@ -180,13 +177,13 @@ export function GridPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Chambre ou nom…"
-              className="w-full rounded-xl bg-zinc-900 py-2 pl-9 pr-3 text-sm text-white ring-1 ring-zinc-800 placeholder:text-zinc-500 focus:outline-none focus:ring-brand-500"
+              className="w-full rounded-lg bg-zinc-900 py-1.5 pl-9 pr-3 text-[13px] text-white ring-1 ring-zinc-700 placeholder:text-zinc-500 focus:outline-none focus:ring-zinc-500"
             />
           </label>
         </div>
 
         {visible.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-zinc-800 py-12 text-center text-sm text-zinc-400">
+          <div className="rounded-xl border border-dashed border-zinc-700 py-12 text-center text-[14px] text-zinc-500">
             Aucune chambre ne correspond à ce filtre.
           </div>
         ) : (
@@ -196,7 +193,7 @@ export function GridPage() {
             ))}
           </div>
         )}
-        <p className="text-xs text-zinc-500">
+        <p className="text-[12px] text-zinc-500">
           {stats.calm} chambre{stats.calm > 1 ? "s" : ""} sans alerte. Un capteur muet depuis plus de {STALE_AFTER_S} s est
           signalé : un silence n'est jamais lu comme « tout va bien ».
         </p>

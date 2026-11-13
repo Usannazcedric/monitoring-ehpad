@@ -49,7 +49,7 @@ export function AckButton({ alert, compact = false }: { alert: Alert; compact?: 
         <select
           value={selectedStaff}
           onChange={(e) => setSelectedStaff(e.target.value)}
-          className="flex-1 min-w-36 rounded-lg bg-zinc-950 text-white text-sm px-2.5 py-1.5 ring-1 ring-zinc-700 focus:outline-none focus:ring-brand-500"
+          className="flex-1 min-w-36 rounded-lg bg-zinc-900 text-white text-[13px] px-2.5 py-1.5 ring-1 ring-zinc-700 focus:outline-none focus:ring-zinc-500"
         >
           <option value="">Qui prend en charge ?</option>
           {STAFF_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
@@ -81,7 +81,7 @@ export function AckButton({ alert, compact = false }: { alert: Alert; compact?: 
     <div className="flex items-center gap-3 flex-wrap">
       {alert.acknowledged_by && (
         <span className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
-          <Hand className="h-3.5 w-3.5 text-brand-300" />
+          <Hand className="h-3.5 w-3.5 text-zinc-500" />
           <span className="text-zinc-100 font-medium">{alert.acknowledged_by}</span> s'en occupe
         </span>
       )}

@@ -13,9 +13,9 @@ export function AlertToast() {
           <button
             key={t.id}
             onClick={() => dismiss(t.id)}
-            className="group relative overflow-hidden text-left rounded-xl border border-zinc-700/80 bg-zinc-900/95 backdrop-blur shadow-2xl shadow-black/60 pl-4 pr-3 py-3"
+            className="group relative overflow-hidden text-left rounded-xl border border-zinc-700 bg-zinc-900 shadow-lg shadow-black/10 pl-4 pr-3 py-3"
           >
-            <span className={`absolute left-0 top-0 h-full w-1.5 ${style.bar}`} />
+            <span className={`absolute left-0 top-0 h-full w-[3px] ${style.bar}`} />
             <div className="flex items-start gap-3">
               <span className={`mt-0.5 rounded-lg p-1.5 ${style.pill} ring-1 ring-inset`}>
                 <BellRing className="h-4 w-4" />

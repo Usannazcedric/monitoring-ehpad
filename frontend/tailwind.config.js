@@ -1,33 +1,29 @@
 /** @type {import('tailwindcss').Config} */
+
+// Les gris (et « white », la couleur du texte le plus fort) sont des variables CSS :
+// le thème clair et le thème sombre les redéfinissent dans index.css, et toutes les
+// pages suivent sans changer une seule classe.
+const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+const zinc = Object.fromEntries(
+  [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((k) => [k, v(`zinc-${k}`)]),
+);
+
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
+        zinc,
+        white: v("strong"),
         // Niveaux d'alerte : du plus calme au plus grave.
         level: {
-          1: "#38bdf8",
-          2: "#fbbf24",
-          3: "#fb923c",
-          4: "#f43f5e",
-          5: "#dc2626",
+          1: "#0ea5e9",
+          2: "#f59e0b",
+          3: "#f97316",
+          4: "#e11d48",
+          5: "#b91c1c",
         },
-        // Gris bleutés de la console de nuit : la palette « zinc » d'origine est
-        // redéfinie ici, toutes les pages en héritent sans changer leurs classes.
-        zinc: {
-          50: "#f8fafc",
-          100: "#eef2f7",
-          200: "#dbe3ee",
-          300: "#c3cddb",
-          400: "#94a3b8",
-          500: "#6b7a93",
-          600: "#46546e",
-          700: "#2b3750",
-          800: "#1b2438",
-          900: "#111827",
-          950: "#0a0f1c",
-        },
-        // Accent : le bleu-vert du bracelet Veilleur.
+        // Accent : le bleu-vert du bracelet Veilleur, utilisé avec parcimonie.
         brand: {
           200: "#99f6e4",
           300: "#5eead4",
@@ -39,7 +35,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "SF Pro Text", "Segoe UI", "Roboto", "sans-serif"],
       },
       keyframes: {
         "soft-pulse": {
@@ -48,7 +44,7 @@ export default {
         },
         "ring-pulse": {
           "0%": { transform: "scale(1)", opacity: "0.7" },
-          "100%": { transform: "scale(1.9)", opacity: "0" },
+          "100%": { transform: "scale(2.2)", opacity: "0" },
         },
       },
       animation: {
