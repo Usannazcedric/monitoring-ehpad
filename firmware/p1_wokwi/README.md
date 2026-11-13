@@ -35,6 +35,7 @@ nouveaux topics de chambre ([`../../mosquitto/config/mosquitto.conf`](../../mosq
 | Interrupteur de gauche (`swDoor`) | 33 → GND | Le capteur d'ouverture de la porte de chambre — **nouveau** |
 | PIR `OUT` | 27 | Le détecteur de présence de la chambre — **nouveau** |
 | Bouton vert ANNULER | 23 → GND | Le bouton d'annulation du bracelet (contre les fausses alertes) — **nouveau, 13/11** |
+| Bouton jaune CHUTE | 25 → GND | Rien : bouton de **démo** qui rejoue une chute (choc, puis immobile au sol) à la place des curseurs du MPU-6050. La vraie règle de détection juge le mouvement — **nouveau, 13/11** |
 
 Interrupteurs en pull-up interne : en position de départ, la broche est à la masse, donc
 **bracelet porté** et **porte fermée**. Basculer l'interrupteur : bracelet retiré, porte ouverte.
@@ -56,6 +57,7 @@ pourcents du temps réel.
 | Geste | Moniteur série | Tableau de bord |
 | --- | --- | --- |
 | Rien | `PUB vitals … "hr_cv":0.02` toutes les 2 s | Fiche R021, chambre 121 |
+| **Bouton jaune CHUTE** (le plus simple) | `[DEMO] bouton CHUTE`, `[CHUTE ?] choc de 2.55 g`, puis `[CHUTE] … alerte dans 15 s, sauf appui sur ANNULER` avec bips, puis `[ALERTE locale L4] fall detected (… rotation 90 deg)` | Urgence : chute. Second appui sur CHUTE : la résidente est relevée |
 | Tourner vite le potentiomètre | `[REJET FC] … CV = 0.2x > 0.15 : mesure instable, NON envoyee` | Rien de faux n'arrive |
 | Potentiomètre > 140 bpm | `[ALERTE locale L4] hr critical` + buzzer | Urgence (FC) |
 | MPU-6050 : `accelX` à 2 g (choc), puis `accelX` = 1, `accelZ` = 0, ne plus toucher | `[CHUTE ?] choc`, puis `[CHUTE] … alerte dans 15 s, sauf appui sur ANNULER` avec bips, puis `[ALERTE locale L4] fall detected (… rotation 90 deg)` + buzzer | Urgence : chute |

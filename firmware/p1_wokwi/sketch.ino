@@ -71,6 +71,7 @@ const int PIN_WORN   = 32;  // interrupteur vers GND : LOW = bracelet porte
 const int PIN_DOOR   = 33;  // interrupteur vers GND : LOW = porte fermee
 const int PIN_PIR    = 27;  // sortie du PIR : HIGH = mouvement dans la chambre
 const int PIN_CANCEL = 23;  // bouton ANNULER vers GND, pull-up interne
+const int PIN_FALL   = 25;  // bouton jaune CHUTE (demo seulement) vers GND, pull-up interne
 const uint8_t MPU_ADDR = 0x68;
 
 // ======================= 3. PARAMETRES =======================
@@ -176,6 +177,17 @@ char fallReason[96];
 bool buzzOn = false;
 int lastCancel = HIGH;
 unsigned long lastCancelChange = 0;
+
+// Bouton CHUTE (demo) : rejoue une chute a la place des curseurs du MPU-6050.
+// Il ne declenche PAS l'alerte lui-meme : il fabrique le mouvement (choc, puis
+// immobile allonge sur le cote), et c'est la vraie regle en trois temps qui juge.
+// Un second appui releve la residente (retour aux valeurs du MPU-6050).
+enum FallScript { SCRIPT_OFF, SCRIPT_IMPACT, SCRIPT_FLOOR };
+FallScript fallScript = SCRIPT_OFF;
+unsigned long fallScriptAt = 0;
+const unsigned long SCRIPT_IMPACT_MS = 200;  // duree du choc rejoue
+int lastFallBtn = HIGH;
+unsigned long lastFallBtnChange = 0;
 
 // ======================= 5. MPU-6050 EN DIRECT (registres I2C) =======================
 void mpuWrite(uint8_t reg, uint8_t value) {
@@ -574,9 +586,36 @@ void updateFallDetector(float normG) {
   }
 }
 
+// Bouton CHUTE : remplace la lecture du MPU-6050 tant que le scenario tourne.
+void applyFallScript() {
+  if (fallScript == SCRIPT_OFF) return;
+  if (fallScript == SCRIPT_IMPACT) {
+    if (millis() - fallScriptAt < SCRIPT_IMPACT_MS) { ax = 2.5; ay = 0; az = 0.5; return; }  // choc 2,5 g
+    fallScript = SCRIPT_FLOOR;
+  }
+  ax = 1.0; ay = 0; az = 0;  // au sol, sur le cote, immobile : pesanteur tournee de 90 degres
+}
+
+void readFallButton() {
+  int state = digitalRead(PIN_FALL);
+  if (state == lastFallBtn || millis() - lastFallBtnChange <= 50) return;  // anti-rebond
+  lastFallBtnChange = millis();
+  lastFallBtn = state;
+  if (state != LOW) return;  // pull-up : LOW = bouton presse
+  if (fallScript == SCRIPT_OFF) {
+    fallScript = SCRIPT_IMPACT;
+    fallScriptAt = millis();
+    Serial.println("[DEMO] bouton CHUTE : choc puis immobile au sol. La regle de detection juge...");
+  } else {
+    fallScript = SCRIPT_OFF;
+    Serial.println("[DEMO] bouton CHUTE : residente relevee, retour aux valeurs du MPU-6050");
+  }
+}
+
 void readImu() {
   if (!imuOk) return;
   mpuReadAccel();
+  applyFallScript();
   float normG = sqrt(ax * ax + ay * ay + az * az);
   float normMs2 = normG * G_TO_MS2;
   if (normMs2 > peakMs2) peakMs2 = normMs2;
@@ -672,6 +711,7 @@ void setup() {
   pinMode(PIN_DOOR, INPUT_PULLUP);
   pinMode(PIN_PIR, INPUT);
   pinMode(PIN_CANCEL, INPUT_PULLUP);
+  pinMode(PIN_FALL, INPUT_PULLUP);
   pinMode(PIN_BUZZER, OUTPUT);
   analogReadResolution(12);
 
@@ -728,6 +768,7 @@ void loop() {
   if (now - lastHrSample >= HR_SAMPLE_MS) { lastHrSample = now; sampleHeartRate(); }
   readSosButton();
   readCancelButton();
+  readFallButton();
   updatePreAlarm();
   readWorn();
   readRoom();

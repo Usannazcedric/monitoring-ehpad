@@ -11,7 +11,8 @@
     { "type": "wokwi-slide-switch", "id": "swWorn", "top": 290, "left": 170, "attrs": {} },
     { "type": "wokwi-slide-switch", "id": "swDoor", "top": 290, "left": -110, "attrs": {} },
     { "type": "wokwi-pir-motion-sensor", "id": "pir1", "top": 180, "left": -230, "attrs": {} },
-    { "type": "wokwi-pushbutton", "id": "btnCancel", "top": 60, "left": 360, "attrs": { "color": "green", "label": "ANNULER" } }
+    { "type": "wokwi-pushbutton", "id": "btnCancel", "top": 60, "left": 360, "attrs": { "color": "green", "label": "ANNULER" } },
+    { "type": "wokwi-pushbutton", "id": "btnFall", "top": 60, "left": 470, "attrs": { "color": "yellow", "label": "CHUTE" } }
   ],
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
@@ -35,7 +36,9 @@
     [ "pir1:GND", "esp:GND.1", "black", [] ],
     [ "pir1:OUT", "esp:27", "limegreen", [] ],
     [ "btnCancel:1.l", "esp:23", "green", [] ],
-    [ "btnCancel:2.l", "esp:GND.3", "black", [] ]
+    [ "btnCancel:2.l", "esp:GND.3", "black", [] ],
+    [ "btnFall:1.l", "esp:25", "gold", [] ],
+    [ "btnFall:2.l", "esp:GND.3", "black", [] ]
   ],
   "dependencies": {}
 }
