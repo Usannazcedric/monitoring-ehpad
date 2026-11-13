@@ -193,6 +193,7 @@ async def on_startup() -> None:
     profiles = load_profiles(settings.profiles_path)[: settings.resident_count]
     for p in profiles:
         _residents[p.id] = Resident.from_profile(p, seed=hash(p.id) & 0xFFFFFFFF)
+        _residents[p.id].calm = settings.calm
     api.init(_residents, settings.demo_mode)
     _publisher = Publisher(settings.mqtt_host, settings.mqtt_port)
     await _publisher.start()
@@ -203,7 +204,7 @@ async def on_startup() -> None:
         _tasks.append(asyncio.create_task(ambient_loop(r)))
         _tasks.append(asyncio.create_task(routine_loop(r)))
     _tasks.append(asyncio.create_task(common_areas_loop()))
-    log.info("simulator_ready", residents=len(_residents), demo_mode=settings.demo_mode)
+    log.info("simulator_ready", residents=len(_residents), demo_mode=settings.demo_mode, calm=settings.calm)
 
 
 @app.on_event("shutdown")

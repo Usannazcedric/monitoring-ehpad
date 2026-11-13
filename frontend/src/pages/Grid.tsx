@@ -6,7 +6,7 @@ import { ResidentCard } from "@/components/ResidentCard";
 import { AlertBadge } from "@/components/AlertBadge";
 import { AckButton } from "@/components/AckButton";
 import { fmtRelative, isFallActivity, reasonLabel, secondsSince, STALE_AFTER_S, LEVEL_STYLE } from "@/lib/format";
-import { residentInfo } from "@/lib/residents";
+import { residentInfo, BRACELET_RESIDENT } from "@/lib/residents";
 
 type Filter = "tous" | "alertes" | "chutes" | "muets";
 
@@ -58,7 +58,9 @@ export function GridPage() {
       level: highestLevelFor(r.resident_id, alerts),
       info: residentInfo(r.resident_id),
     }));
-    arr.sort((a, b) => b.level - a.level || a.info.room.localeCompare(b.info.room));
+    // À gravité égale, le bracelet Wokwi (chambre 121, le vrai capteur de la démo) passe en tête.
+    const braceletFirst = (id: string) => (id === BRACELET_RESIDENT ? 0 : 1);
+    arr.sort((a, b) => b.level - a.level || braceletFirst(a.r.resident_id) - braceletFirst(b.r.resident_id) || a.info.room.localeCompare(b.info.room));
     return arr;
   }, [residents, alerts, presentation]);
 

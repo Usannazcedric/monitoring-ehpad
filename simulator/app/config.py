@@ -10,6 +10,7 @@ class Settings:
     api_port: int
     resident_count: int
     demo_mode: bool
+    calm: bool
     log_level: str
     profiles_path: str
 
@@ -21,6 +22,7 @@ class Settings:
             api_port=int(os.getenv("API_PORT", "9100")),
             resident_count=int(os.getenv("RESIDENT_COUNT", "20")),
             demo_mode=os.getenv("DEMO_MODE", "false").lower() == "true",
+            calm=os.getenv("SIM_CALM", "false").lower() == "true",
             log_level=os.getenv("LOG_LEVEL", "INFO"),
             profiles_path=os.getenv("PROFILES_PATH", "/app/profiles.json"),
         )

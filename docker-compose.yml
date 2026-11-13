@@ -67,6 +67,9 @@ services:
       API_PORT: 9100
       RESIDENT_COUNT: 20
       DEMO_MODE: "true"
+      # Démarre au calme : constantes saines, tableau vide. Désactivable dans l'onglet Démo
+      # pour revoir les profils pathologiques du MBA 1 (tous les niveaux d'alerte).
+      SIM_CALM: "true"
       LOG_LEVEL: INFO
     restart: unless-stopped
     healthcheck:
