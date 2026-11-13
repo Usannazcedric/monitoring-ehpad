@@ -1,5 +1,15 @@
 import { create } from "zustand";
 import type { Alert, ResidentSnapshot, RoomSnapshot } from "@/lib/api";
+import { BRACELET_RESIDENT } from "@/lib/residents";
+
+function readPresentation(): boolean {
+  try { return localStorage.getItem("veilleur-presentation") === "1"; } catch { return false; }
+}
+
+/** En mode présentation, seul le résident du bracelet est affiché. */
+export function isShown(residentId: string, presentation: boolean): boolean {
+  return !presentation || residentId === BRACELET_RESIDENT;
+}
 
 interface State {
   residents: Map<string, ResidentSnapshot>;
@@ -7,6 +17,9 @@ interface State {
   rooms: Map<string, RoomSnapshot>;
   guards: Record<string, string>;   // wing → staff name
   connected: boolean;
+  /** Mode présentation : n'afficher que le bracelet (chambre 121), pas les résidents simulés. */
+  presentation: boolean;
+  setPresentation: (on: boolean) => void;
   setResident: (snap: ResidentSnapshot) => void;
   setResidentBulk: (snaps: ResidentSnapshot[]) => void;
   upsertAlert: (a: Alert) => void;
@@ -25,6 +38,11 @@ export const useStore = create<State>((set) => ({
   rooms: new Map(),
   guards: { A: "Sophie Martin", B: "Marie Lambert" },
   connected: false,
+  presentation: readPresentation(),
+  setPresentation: (on) => {
+    try { localStorage.setItem("veilleur-presentation", on ? "1" : "0"); } catch { /* navigation privée */ }
+    set({ presentation: on });
+  },
   setResident: (snap) => set((s) => {
     const m = new Map(s.residents);
     const prev = m.get(snap.resident_id) ?? { resident_id: snap.resident_id };

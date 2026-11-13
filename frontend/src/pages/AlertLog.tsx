@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CircleCheck, Clock, Hand, Info, TrendingUp } from "lucide-react";
-import { useStore } from "@/store/store";
+import { useStore, isShown } from "@/store/store";
 import { AlertBadge } from "@/components/AlertBadge";
 import { AckButton } from "@/components/AckButton";
 import { fmtRelative, LEVEL_DESCRIPTIONS, LEVEL_LABELS, LEVEL_STYLE, reasonLabel } from "@/lib/format";
@@ -44,7 +44,12 @@ function AlertRow({ a }: { a: Alert }) {
 
 export function AlertLog() {
   useTick();
-  const alertsMap = useStore((s) => s.alerts);
+  const allAlerts = useStore((s) => s.alerts);
+  const presentation = useStore((s) => s.presentation);
+  const alertsMap = useMemo(
+    () => new Map([...allAlerts].filter(([, a]) => isShown(a.resident_id, presentation))),
+    [allAlerts, presentation],
+  );
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
 
   const { active, taken } = useMemo(() => {

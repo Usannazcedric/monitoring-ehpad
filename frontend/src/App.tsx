@@ -8,6 +8,7 @@ import { AlertLog } from "@/pages/AlertLog";
 import { MovementsPage } from "@/pages/Movements";
 import { StaffPage } from "@/pages/StaffPage";
 import { BraceletPage } from "@/pages/Bracelet";
+import { DemoPage } from "@/pages/Demo";
 
 export default function App() {
   useBootstrap();
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/movements" element={<MovementsPage />} />
           <Route path="/bracelet" element={<BraceletPage />} />
           <Route path="/personnel" element={<StaffPage />} />
+          <Route path="/demo" element={<DemoPage />} />
           <Route path="*" element={<div className="p-8 text-zinc-400">Page introuvable</div>} />
         </Routes>
       </main>

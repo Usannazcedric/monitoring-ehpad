@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { BellRing, LayoutDashboard, Map, Moon, Sun, Users, Watch } from "lucide-react";
-import { useStore } from "@/store/store";
+import { BellRing, LayoutDashboard, Map, Moon, Presentation, Sun, Users, Watch } from "lucide-react";
+import { useStore, isShown } from "@/store/store";
 
 const LINKS = [
   { to: "/", label: "Tableau de bord", icon: LayoutDashboard, end: true },
@@ -9,6 +9,7 @@ const LINKS = [
   { to: "/movements", label: "Plan & mouvements", icon: Map, end: false },
   { to: "/bracelet", label: "Bracelet", icon: Watch, end: false },
   { to: "/personnel", label: "Personnel", icon: Users, end: false },
+  { to: "/demo", label: "Démo", icon: Presentation, end: false },
 ];
 
 function useClock() {
@@ -66,7 +67,7 @@ function ThemeButton() {
 }
 
 export function NavBar() {
-  const alertCount = useStore((s) => s.alerts.size);
+  const alertCount = useStore((s) => [...s.alerts.values()].filter((a) => isShown(a.resident_id, s.presentation)).length);
   const guards = useStore((s) => s.guards);
   const now = useClock();
 

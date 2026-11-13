@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useStore } from "@/store/store";
+import { useStore, isShown } from "@/store/store";
 import { api } from "@/lib/api";
 import { createWebSocket } from "@/lib/ws";
 import { useToasts } from "./useToasts";
@@ -44,7 +44,7 @@ export function useBootstrap() {
           setResident(env.data);
         } else if (t === "alerts/new") {
           upsertAlert(env.data);
-          if (env.data?.level >= 3) {
+          if (env.data?.level >= 3 && isShown(env.data.resident_id as string, useStore.getState().presentation)) {
             const info = residentInfo(env.data.resident_id as string);
             const guard = useStore.getState().guards[info.wing];
             pushToast({

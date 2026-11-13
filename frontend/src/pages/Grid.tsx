@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, BellRing, CircleCheck, Search, ShieldAlert, Users, WifiOff } from "lucide-react";
-import { useStore, highestLevelFor } from "@/store/store";
+import { useStore, highestLevelFor, isShown } from "@/store/store";
 import { ResidentCard } from "@/components/ResidentCard";
 import { AlertBadge } from "@/components/AlertBadge";
 import { AckButton } from "@/components/AckButton";
@@ -48,18 +48,19 @@ export function GridPage() {
   useTick();
   const residents = useStore((s) => s.residents);
   const alerts = useStore((s) => s.alerts);
+  const presentation = useStore((s) => s.presentation);
   const [filter, setFilter] = useState<Filter>("tous");
   const [query, setQuery] = useState("");
 
   const rows = useMemo(() => {
-    const arr = Array.from(residents.values()).map((r) => ({
+    const arr = Array.from(residents.values()).filter((r) => isShown(r.resident_id, presentation)).map((r) => ({
       r,
       level: highestLevelFor(r.resident_id, alerts),
       info: residentInfo(r.resident_id),
     }));
     arr.sort((a, b) => b.level - a.level || a.info.room.localeCompare(b.info.room));
     return arr;
-  }, [residents, alerts]);
+  }, [residents, alerts, presentation]);
 
   const stats = {
     total: rows.length,
@@ -72,10 +73,10 @@ export function GridPage() {
   const priority = useMemo(
     () =>
       Array.from(alerts.values())
-        .filter((a) => a.status === "active" && a.level >= 4)
+        .filter((a) => a.status === "active" && a.level >= 4 && isShown(a.resident_id, presentation))
         .sort((a, b) => b.level - a.level || a.created_at.localeCompare(b.created_at))
         .slice(0, 3),
-    [alerts],
+    [alerts, presentation],
   );
 
   const visible = rows.filter(({ r, level, info }) => {
@@ -86,6 +87,15 @@ export function GridPage() {
     if (q && !info.room.includes(q) && !info.name.toLowerCase().includes(q) && !r.resident_id.toLowerCase().includes(q)) return false;
     return true;
   });
+
+  if (rows.length === 0 && presentation) {
+    return (
+      <div className="p-12 flex flex-col items-center gap-2 text-center text-zinc-500">
+        <div className="text-[15px] font-medium text-zinc-200">Le bracelet de la chambre 121 n'envoie rien pour l'instant.</div>
+        <div className="text-[13px]">Lancez la carte dans Wokwi (▶), ou quittez le mode présentation dans l'onglet <Link to="/demo" className="underline">Démo</Link>.</div>
+      </div>
+    );
+  }
 
   if (rows.length === 0) {
     return (
@@ -106,6 +116,11 @@ export function GridPage() {
             Les chambres qui demandent une intervention passent en premier.
           </p>
         </div>
+        {presentation && (
+          <Link to="/demo" className="rounded-md bg-zinc-800 px-2.5 py-1 text-[12px] font-medium text-zinc-300 ring-1 ring-zinc-700 hover:text-white">
+            Mode présentation : chambre 121 seulement
+          </Link>
+        )}
       </header>
 
       <section className="grid grid-cols-2 xl:grid-cols-4 gap-3">
