@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Check, Hand, X } from "lucide-react";
 import { Button } from "./ui/Button";
 import { api, type Alert } from "@/lib/api";
 import { useStore } from "@/store/store";
@@ -9,16 +10,11 @@ const STAFF_NAMES = [
   "Dr. Isabelle Dupont", "Élise Rousseau",
 ];
 
-export function AckButton({ alert }: { alert: Alert }) {
+export function AckButton({ alert, compact = false }: { alert: Alert; compact?: boolean }) {
   const upsertAlert = useStore((s) => s.upsertAlert);
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState("");
-
-  const onAckClick = () => {
-    if (picking) return;
-    setPicking(true);
-  };
 
   const confirmAck = async () => {
     setBusy(true);
@@ -45,56 +41,53 @@ export function AckButton({ alert }: { alert: Alert }) {
     }
   };
 
+  const size = compact ? "!px-3 !py-1.5 !text-xs" : "";
+
+  if (alert.status === "active" && picking) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <select
+          value={selectedStaff}
+          onChange={(e) => setSelectedStaff(e.target.value)}
+          className="flex-1 min-w-36 rounded-lg bg-zinc-950 text-white text-sm px-2.5 py-1.5 ring-1 ring-zinc-700 focus:outline-none focus:ring-brand-500"
+        >
+          <option value="">Qui prend en charge ?</option>
+          {STAFF_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+        <Button variant="primary" className={size} disabled={busy || !selectedStaff} onClick={confirmAck}>
+          <Check className="h-4 w-4" /> Confirmer
+        </Button>
+        <button onClick={() => setPicking(false)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200" title="Annuler">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
+
+  if (alert.status === "active") {
+    return (
+      <div className="flex gap-2">
+        <Button variant="primary" className={size} disabled={busy} onClick={() => setPicking(true)} title="Je vois l'alerte et je m'en occupe">
+          <Hand className="h-4 w-4" /> Je prends en charge
+        </Button>
+        <Button variant="secondary" className={size} disabled={busy} onClick={onResolve} title="La situation est réglée">
+          Résolu
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-2">
-      {alert.status === "active" && !picking && (
-        <div className="flex gap-2">
-          <Button
-            variant="primary"
-            disabled={busy}
-            onClick={onAckClick}
-            title="Je prends en charge cette alerte"
-          >
-            Je prends en charge
-          </Button>
-          <Button variant="secondary" disabled={busy} onClick={onResolve} title="La situation est réglée">
-            Résolu
-          </Button>
-        </div>
+    <div className="flex items-center gap-3 flex-wrap">
+      {alert.acknowledged_by && (
+        <span className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
+          <Hand className="h-3.5 w-3.5 text-brand-300" />
+          <span className="text-zinc-100 font-medium">{alert.acknowledged_by}</span> s'en occupe
+        </span>
       )}
-      {alert.status === "active" && picking && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <select
-            value={selectedStaff}
-            onChange={(e) => setSelectedStaff(e.target.value)}
-            className="flex-1 min-w-32 rounded-md border border-zinc-700 bg-zinc-900 text-white text-sm px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-500"
-          >
-            <option value="">— Sélectionner le soignant —</option>
-            {STAFF_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-          <Button variant="primary" disabled={busy || !selectedStaff} onClick={confirmAck}>
-            Confirmer
-          </Button>
-          <button
-            onClick={() => setPicking(false)}
-            className="text-xs text-zinc-500 hover:text-zinc-300 px-1"
-          >
-            Annuler
-          </button>
-        </div>
-      )}
-      {alert.status !== "active" && (
-        <div className="flex items-center gap-3 flex-wrap">
-          {alert.acknowledged_by && (
-            <span className="text-xs text-zinc-400">
-              Pris en charge par <span className="text-white font-medium">{alert.acknowledged_by}</span>
-            </span>
-          )}
-          <Button variant="secondary" disabled={busy} onClick={onResolve} title="La situation est réglée">
-            Résolu
-          </Button>
-        </div>
-      )}
+      <Button variant="secondary" className={size} disabled={busy} onClick={onResolve} title="La situation est réglée">
+        <Check className="h-4 w-4" /> Résolu
+      </Button>
     </div>
   );
 }

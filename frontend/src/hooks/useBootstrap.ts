@@ -3,7 +3,8 @@ import { useStore } from "@/store/store";
 import { api } from "@/lib/api";
 import { createWebSocket } from "@/lib/ws";
 import { useToasts } from "./useToasts";
-import { LEVEL_LABELS } from "@/lib/format";
+import { LEVEL_LABELS, reasonLabel } from "@/lib/format";
+import { residentInfo } from "@/lib/residents";
 
 export function useBootstrap() {
   const setResidentBulk = useStore((s) => s.setResidentBulk);
@@ -44,14 +45,13 @@ export function useBootstrap() {
         } else if (t === "alerts/new") {
           upsertAlert(env.data);
           if (env.data?.level >= 3) {
-            const room = parseInt((env.data.resident_id as string).slice(1));
-            const wing = room <= 110 ? "A" : "B";
-            const guard = useStore.getState().guards[wing];
+            const info = residentInfo(env.data.resident_id as string);
+            const guard = useStore.getState().guards[info.wing];
             pushToast({
-              title: `${LEVEL_LABELS[env.data.level] ?? "Alerte"} — ${env.data.resident_id}`,
+              title: `${LEVEL_LABELS[env.data.level] ?? "Alerte"} · chambre ${info.room}`,
               description: guard
-                ? `${env.data.reason} · Notifié : ${guard}`
-                : env.data.reason,
+                ? `${reasonLabel(env.data.reason)} · ${guard} prévenue`
+                : reasonLabel(env.data.reason),
               level: env.data.level,
             });
           }

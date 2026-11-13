@@ -66,7 +66,7 @@ export function StaffPage() {
         {["A", "B"].map((wing) => (
           <Card key={wing}>
             <CardBody className="flex items-center gap-3">
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-purple-900 flex items-center justify-center text-lg font-bold text-purple-300">
+              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-brand-900 flex items-center justify-center text-lg font-bold text-brand-300">
                 {wing}
               </div>
               <div className="flex-1 min-w-0">
@@ -85,7 +85,7 @@ export function StaffPage() {
 
       {loading ? (
         <div className="flex items-center gap-3 text-zinc-400 py-8">
-          <div className="h-5 w-5 border-4 border-zinc-700 border-t-purple-500 rounded-full animate-spin" />
+          <div className="h-5 w-5 border-4 border-zinc-700 border-t-brand-500 rounded-full animate-spin" />
           <span>Chargement…</span>
         </div>
       ) : (
@@ -175,7 +175,7 @@ function StaffRow({
           <span className="font-medium text-white text-sm">{member.name}</span>
           <span className="text-xs text-zinc-500">{member.role}</span>
           {isGuard && (
-            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-purple-900 border border-purple-700 text-purple-300 font-medium">
+            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-brand-900 border border-brand-700 text-brand-300 font-medium">
               🛡 Garde Aile {guardWing}
             </span>
           )}
@@ -203,12 +203,12 @@ function StaffRow({
               key={wing}
               disabled={busy}
               onClick={() => onAssignGuard(wing, member.name)}
-              className="text-[11px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:border-purple-600 hover:text-purple-300 disabled:opacity-40 transition-colors whitespace-nowrap"
+              className="text-[11px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:border-brand-600 hover:text-brand-300 disabled:opacity-40 transition-colors whitespace-nowrap"
             >
               Garde Aile {wing}
             </button>
           ) : (
-            <span key={wing} className="text-[11px] px-2 py-1 rounded border border-purple-700 text-purple-300 whitespace-nowrap">
+            <span key={wing} className="text-[11px] px-2 py-1 rounded border border-brand-700 text-brand-300 whitespace-nowrap">
               ✓ Garde Aile {wing}
             </span>
           )

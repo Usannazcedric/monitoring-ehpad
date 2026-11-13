@@ -7,18 +7,20 @@ import { ResidentDetail } from "@/pages/ResidentDetail";
 import { AlertLog } from "@/pages/AlertLog";
 import { MovementsPage } from "@/pages/Movements";
 import { StaffPage } from "@/pages/StaffPage";
+import { BraceletPage } from "@/pages/Bracelet";
 
 export default function App() {
   useBootstrap();
   return (
     <div className="min-h-full">
       <NavBar />
-      <main>
+      <main className="lg:pl-64">
         <Routes>
           <Route path="/" element={<GridPage />} />
           <Route path="/resident/:id" element={<ResidentDetail />} />
           <Route path="/alerts" element={<AlertLog />} />
           <Route path="/movements" element={<MovementsPage />} />
+          <Route path="/bracelet" element={<BraceletPage />} />
           <Route path="/personnel" element={<StaffPage />} />
           <Route path="*" element={<div className="p-8 text-zinc-400">Page introuvable</div>} />
         </Routes>

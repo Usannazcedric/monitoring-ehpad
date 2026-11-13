@@ -8,7 +8,8 @@ import { AlertBadge } from "@/components/AlertBadge";
 import { AckButton } from "@/components/AckButton";
 import { VitalChart } from "@/components/VitalChart";
 import { DailySchedule } from "@/components/DailySchedule";
-import { fmtRelative, LEVEL_LABELS, LEVEL_DESCRIPTIONS, ACTIVITY_LABELS, STATUS_BY_LEVEL, isFallActivity } from "@/lib/format";
+import { fmtRelative, LEVEL_LABELS, LEVEL_DESCRIPTIONS, ACTIVITY_LABELS, STATUS_BY_LEVEL, isFallActivity, reasonLabel } from "@/lib/format";
+import { residentInfo } from "@/lib/residents";
 import { highestLevelFor } from "@/store/store";
 import { RoomStatus } from "@/components/RoomStatus";
 
@@ -72,7 +73,7 @@ export function ResidentDetail() {
   if (!resident) {
     return (
       <div className="p-8 flex flex-col items-center gap-3 text-zinc-400">
-        <div className="h-6 w-6 border-4 border-zinc-700 border-t-purple-500 rounded-full animate-spin" />
+        <div className="h-6 w-6 border-4 border-zinc-700 border-t-brand-500 rounded-full animate-spin" />
         <div>Chargement de {id}…</div>
       </div>
     );
@@ -92,7 +93,7 @@ export function ResidentDetail() {
           ← Retour au tableau de bord
         </Link>
         <div className="h-4 w-px bg-zinc-700" />
-        <h1 className="text-2xl font-bold text-white">{id}</h1>
+        <h1 className="text-2xl font-bold text-white">Chambre {residentInfo(id).room} · {residentInfo(id).name} <span className="text-base font-normal text-zinc-500">{id}</span></h1>
         <span className={`text-sm font-medium ${status.cls}`}>{status.text}</span>
         <span className="text-sm text-zinc-500 ml-auto">
           Dernière mesure reçue il y a {fmtRelative(resident.last_seen)}
@@ -200,7 +201,7 @@ export function ResidentDetail() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <AlertBadge level={a.level} />
                     <div className="flex-1 text-sm">
-                      <div className="font-medium text-white">{LEVEL_LABELS[a.level]} — {a.reason}</div>
+                      <div className="font-medium text-white">{LEVEL_LABELS[a.level]} — {reasonLabel(a.reason)}</div>
                       <div className="text-xs text-zinc-500 mt-0.5">{LEVEL_DESCRIPTIONS[a.level]}</div>
                       <div className="text-xs text-zinc-400 mt-0.5">
                         {a.status === "active" ? "En attente" : a.status === "acknowledged" ? "Pris en charge" : "Résolu"}
@@ -224,7 +225,7 @@ export function ResidentDetail() {
                 <div className="font-semibold text-white">Capteurs ambiants — Chambre {roomEntry.room_id}</div>
                 <div className="text-xs text-zinc-500 mt-0.5">Détecteur de mouvement et capteur de porte</div>
               </div>
-              <Link to="/movements" className="text-xs text-purple-400 hover:text-purple-300">
+              <Link to="/movements" className="text-xs text-brand-400 hover:text-brand-300">
                 Voir le plan complet →
               </Link>
             </div>
@@ -267,7 +268,7 @@ export function ResidentDetail() {
             <button
               onClick={generateSummary}
               disabled={summaryBusy}
-              className="px-3 py-1.5 rounded-md text-sm font-medium bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white"
+              className="px-3 py-1.5 rounded-md text-sm font-medium bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white"
             >
               {summaryBusy ? "Génération…" : summary ? "Régénérer" : "Générer"}
             </button>
