@@ -20,7 +20,8 @@ Ce dépôt **continue** le projet de l'an dernier (Digi4), archivé tel quel sur
 | Contrat MQTT — correspondance Digi4 → Digi5 | [`docs/contrat_mqtt.md`](docs/contrat_mqtt.md) |
 | Module 1 — firmware ESP32 qui remplace le simulateur Python | [`firmware/m1_wokwi/`](firmware/m1_wokwi/) |
 | Projet 1 — firmware ESP32 avec les capteurs du cas A (port du bracelet, présence, porte) et la règle de chute du TP M2-2 | [`firmware/p1_wokwi/`](firmware/p1_wokwi/) |
-| Simulation Wokwi de la carte | [wokwi.com/projects/476778339332099073](https://wokwi.com/projects/476778339332099073) |
+| Simulation Wokwi — Projet 1 (bracelet : chute, boutons ANNULER et CHUTE) | [wokwi.com/projects/480574192585000961](https://wokwi.com/projects/480574192585000961) |
+| Simulation Wokwi — module 1 (carte de base) | [wokwi.com/projects/476778339332099073](https://wokwi.com/projects/476778339332099073) |
 | Démonstration vidéo — carte ESP32 → dashboard (39 s) | [`firmware/m1_wokwi/docs/demo-chaine-complete.mp4`](firmware/m1_wokwi/docs/demo-chaine-complete.mp4) |
 
 Le firmware ESP32 publie sur les **mêmes topics et les mêmes formats JSON** que le
