@@ -50,10 +50,9 @@ export function ResidentCard({ resident, level }: Props) {
   return (
     <Link
       to={`/resident/${resident.resident_id}`}
-      className="group relative block overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 transition-colors hover:border-zinc-600"
+      className={`group relative block overflow-hidden rounded-xl border bg-zinc-900 transition-colors hover:border-zinc-600 ${style.border}`}
       title={`Chambre ${info.room} — voir le détail`}
     >
-      {level > 0 && <span className={`absolute inset-y-0 left-0 w-[3px] ${style.bar}`} />}
       <div className="p-4 space-y-3.5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">

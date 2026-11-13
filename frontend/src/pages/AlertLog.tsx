@@ -20,8 +20,7 @@ function AlertRow({ a }: { a: Alert }) {
   const info = residentInfo(a.resident_id);
   const st = LEVEL_STYLE[a.level] ?? LEVEL_STYLE[0];
   return (
-    <div className="relative flex flex-col gap-3 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 p-4 pl-5 sm:flex-row sm:items-center">
-      <span className={`absolute inset-y-0 left-0 w-[3px] ${st.bar}`} />
+    <div className={`relative flex flex-col gap-3 overflow-hidden rounded-xl border bg-zinc-900 p-4 sm:flex-row sm:items-center ${st.border}`}>
       <Link to={`/resident/${a.resident_id}`} className="flex w-28 shrink-0 flex-col">
         <span className="text-[13px] text-zinc-500">Chambre</span>
         <span className="text-[22px] font-semibold text-white tabular leading-tight tracking-tight">{info.room}</span>

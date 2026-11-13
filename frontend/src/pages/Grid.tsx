@@ -130,8 +130,7 @@ export function GridPage() {
               const info = residentInfo(a.resident_id);
               const st = LEVEL_STYLE[a.level] ?? LEVEL_STYLE[0];
               return (
-                <div key={a.id} className="relative overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 p-4 pl-5">
-                  <span className={`absolute inset-y-0 left-0 w-[3px] ${st.bar}`} />
+                <div key={a.id} className={`relative overflow-hidden rounded-xl border bg-zinc-900 p-4 ${st.border}`}>
                   <div className="flex items-start justify-between gap-2">
                     <Link to={`/resident/${a.resident_id}`} className="min-w-0">
                       <div className="text-[13px] text-zinc-500">Chambre</div>
