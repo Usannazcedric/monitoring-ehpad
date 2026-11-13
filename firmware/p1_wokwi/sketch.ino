@@ -6,6 +6,7 @@
     - interrupteur "bracelet porte"  : tient lieu de la detection de port (contact peau)
     - detecteur de presence (PIR)    : capteur de chambre
     - interrupteur de porte          : capteur d'ouverture de la porte de chambre
+    - bouton ANNULER                 : annule une fausse alerte de chute (dossier 5.3)
   et deux traitements embarques, repris des TP du module 2 :
     - chute = choc, PUIS immobilite, PUIS position allongee (TP M2-2) ;
     - une FC instable n'est pas envoyee (regle qualite du TP M2-1).
@@ -69,6 +70,7 @@ const int PIN_SCL    = 22;
 const int PIN_WORN   = 32;  // interrupteur vers GND : LOW = bracelet porte
 const int PIN_DOOR   = 33;  // interrupteur vers GND : LOW = porte fermee
 const int PIN_PIR    = 27;  // sortie du PIR : HIGH = mouvement dans la chambre
+const int PIN_CANCEL = 23;  // bouton ANNULER vers GND, pull-up interne
 const uint8_t MPU_ADDR = 0x68;
 
 // ======================= 3. PARAMETRES =======================
@@ -89,6 +91,15 @@ const float STILL_STD_G         = 0.05;   // ...avec un ecart-type de la norme <
 const unsigned long STILL_TIMEOUT_MS = 15000;  // pas d'immobilite 15 s apres le choc : pas de chute
 const float LYING_ANGLE_DEG     = 50.0;   // orientation : pesanteur tournee de plus de 50 degres
 const unsigned long FALL_ACTIVITY_MS = 5000;   // l'activite reste "fall" 5 s (2 messages au moins)
+
+// Bouton ANNULER (mesure contre les fausses alertes, dossier 5.3 lignes 5 et 6).
+// Une chute confirmee ne part pas tout de suite : le bracelet sonne (vibre)
+// pendant le compte a rebours, et la residente peut l'annuler si elle va bien.
+// L'annulation n'efface rien : elle est signalee au soignant (niveau 1), et si
+// la residente est toujours couchee apres RECHECK_MS, l'alerte repart.
+// Delais raccourcis pour la demo ; dans le vrai produit : 30 s et 5 min.
+const unsigned long CANCEL_WINDOW_MS = 15000;
+const unsigned long RECHECK_MS       = 60000;
 
 // Regle qualite de la FC (TP M2-1) : coefficient de variation des 10 lectures
 // de la fenetre. Au-dessus de 0,15, la mesure n'est PAS envoyee.
@@ -157,6 +168,14 @@ FallState fallState = FS_IDLE;
 unsigned long impactAt = 0;
 float impactPeakG = 0;
 float preX = 0, preY = 0, preZ = 1;  // pesanteur 2 s avant le choc
+
+// Compte a rebours avant l'alerte, et surveillance apres une annulation
+bool preAlarm = false;
+unsigned long preAlarmUntil = 0, cancelWatchUntil = 0;
+char fallReason[96];
+bool buzzOn = false;
+int lastCancel = HIGH;
+unsigned long lastCancelChange = 0;
 
 // ======================= 5. MPU-6050 EN DIRECT (registres I2C) =======================
 void mpuWrite(uint8_t reg, uint8_t value) {
@@ -417,6 +436,72 @@ void publishRoom() {
 }
 
 // ======================= 9. CAPTEURS LOCAUX =======================
+// Alerte de chute : le backend la deduit de activity="fall" (rules.py).
+void fireFall(const char* reason) {
+  fallUntil = millis() + FALL_ACTIVITY_MS;
+  localAlert(LEVEL_URGENCE, reason);
+  if (mqtt.connected() && worn) publishMotion();  // sans attendre le prochain cycle
+}
+
+void stopBuzzer() {
+  noTone(PIN_BUZZER);
+  buzzOn = false;
+}
+
+void startPreAlarm() {
+  preAlarm = true;
+  preAlarmUntil = millis() + CANCEL_WINDOW_MS;
+  Serial.printf("[CHUTE] %s : alerte dans %lu s, sauf appui sur ANNULER\n",
+                fallReason, CANCEL_WINDOW_MS / 1000);
+}
+
+// Compte a rebours, puis verification apres une annulation. Appele a chaque loop().
+void updatePreAlarm() {
+  unsigned long now = millis();
+  if (preAlarm) {
+    bool on = ((now / 400) % 2) == 0;  // bips : le vibreur du vrai bracelet
+    if (on != buzzOn) {
+      if (on) tone(PIN_BUZZER, 1500);
+      else noTone(PIN_BUZZER);
+      buzzOn = on;
+    }
+    if (now >= preAlarmUntil) {
+      preAlarm = false;
+      stopBuzzer();
+      fireFall(fallReason);
+    }
+  }
+  if (cancelWatchUntil && now >= cancelWatchUntil) {
+    cancelWatchUntil = 0;
+    if (worn && angleDeg(preX, preY, preZ, gx, gy, gz) > LYING_ANGLE_DEG) {
+      Serial.println("[ANNULATION] residente toujours couchee : l'alerte repart");
+      fireFall("fall detected (toujours au sol apres annulation)");
+    } else {
+      Serial.println("[ANNULATION] confirmee : la residente s'est relevee");
+    }
+  }
+}
+
+// Bouton ANNULER : une annulation n'efface jamais l'evenement. Elle est publiee
+// en niveau 1 (information) pour que le soignant passe a la ronde suivante.
+void readCancelButton() {
+  int state = digitalRead(PIN_CANCEL);
+  if (state == lastCancel || millis() - lastCancelChange <= 50) return;  // anti-rebond
+  lastCancelChange = millis();
+  lastCancel = state;
+  if (state != LOW) return;  // pull-up : LOW = bouton presse
+  if (!preAlarm) {
+    Serial.println("[ANNULER] rien a annuler");
+    return;
+  }
+  preAlarm = false;
+  stopBuzzer();
+  cancelWatchUntil = millis() + RECHECK_MS;
+  Serial.printf("[ANNULER] chute annulee par la residente ; nouvelle verification dans %lu s\n",
+                RECHECK_MS / 1000);
+  publishAlert(LEVEL_INFORMATION, "chute annulee par la residente : passage a la ronde suivante");
+}
+
 void resetFallDetector() {
   fallState = FS_IDLE;
   nwCount = 0;
@@ -469,12 +554,9 @@ void updateFallDetector(float normG) {
       float ang = angleDeg(preX, preY, preZ, gx, gy, gz);
       bool naive = impactPeakG > NAIVE_G;
       if (ang > LYING_ANGLE_DEG) {
-        char reason[96];
-        snprintf(reason, sizeof(reason),
+        snprintf(fallReason, sizeof(fallReason),
                  "fall detected (choc %.1f g, immobile 3 s, rotation %.0f deg)", impactPeakG, ang);
-        fallUntil = now + FALL_ACTIVITY_MS;
-        localAlert(LEVEL_URGENCE, reason);  // le backend la deduit de activity="fall"
-        if (mqtt.connected() && worn) publishMotion();  // sans attendre le prochain cycle
+        startPreAlarm();
       } else {
         Serial.printf("[CHUTE ECARTEE] choc %.1f g puis immobile, mais rotation %.0f deg "
                       "< %.0f : assis lourdement ? Pas d'alerte. (regle naive du module 1 : %s)\n",
@@ -589,6 +671,7 @@ void setup() {
   pinMode(PIN_WORN, INPUT_PULLUP);
   pinMode(PIN_DOOR, INPUT_PULLUP);
   pinMode(PIN_PIR, INPUT);
+  pinMode(PIN_CANCEL, INPUT_PULLUP);
   pinMode(PIN_BUZZER, OUTPUT);
   analogReadResolution(12);
 
@@ -644,6 +727,8 @@ void loop() {
   if (now - lastImu >= IMU_PERIOD_MS) { lastImu = now; readImu(); }
   if (now - lastHrSample >= HR_SAMPLE_MS) { lastHrSample = now; sampleHeartRate(); }
   readSosButton();
+  readCancelButton();
+  updatePreAlarm();
   readWorn();
   readRoom();
 

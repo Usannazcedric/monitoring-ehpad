@@ -16,6 +16,7 @@ Dossier de cadrage : [`../../projet1/dossier_cadrage.md`](../../projet1/dossier_
 | Chute | Règle naïve : norme > 2,5 g | **Choc > 2 g, puis 3 s immobile, puis rotation > 50°** (TP M2-2, section « pour aller plus loin ») |
 | FC | Une lecture envoyée toutes les 2 s | Moyenne de 10 lectures ; **non envoyée** si leur coefficient de variation dépasse 0,15 (TP M2-1) |
 | Bracelet retiré | — | Plus aucune mesure envoyée ; alerte technique (niveau 2) au bout de 30 s |
+| Fausse alerte | — | **Bouton ANNULER** : 15 s pour annuler une chute détectée ; l'annulation est publiée en niveau 1, et l'alerte repart si la résidente est encore couchée 60 s plus tard (ajout du 13/11) |
 | Chambre | — | `ambient/room/121` (présence) et `door/room/121` (porte), au format du simulateur Python |
 
 Les topics, le format JSON et les seuils de FC restent ceux de Digi4 : le backend et le
@@ -33,6 +34,7 @@ nouveaux topics de chambre ([`../../mosquitto/config/mosquitto.conf`](../../mosq
 | Interrupteur de droite (`swWorn`) | 32 → GND | La détection de port (contact avec la peau) — **nouveau** |
 | Interrupteur de gauche (`swDoor`) | 33 → GND | Le capteur d'ouverture de la porte de chambre — **nouveau** |
 | PIR `OUT` | 27 | Le détecteur de présence de la chambre — **nouveau** |
+| Bouton vert ANNULER | 23 → GND | Le bouton d'annulation du bracelet (contre les fausses alertes) — **nouveau, 13/11** |
 
 Interrupteurs en pull-up interne : en position de départ, la broche est à la masse, donc
 **bracelet porté** et **porte fermée**. Basculer l'interrupteur : bracelet retiré, porte ouverte.
@@ -54,7 +56,8 @@ pourcents du temps réel.
 | Rien | `PUB vitals … "hr_cv":0.02` toutes les 2 s | Fiche R021, chambre 121 |
 | Tourner vite le potentiomètre | `[REJET FC] … CV = 0.2x > 0.15 : mesure instable, NON envoyee` | Rien de faux n'arrive |
 | Potentiomètre > 140 bpm | `[ALERTE locale L4] hr critical` + buzzer | Urgence (FC) |
-| MPU-6050 : `accelX` à 2 g (choc), puis `accelX` = 1, `accelZ` = 0, ne plus toucher | `[CHUTE ?] choc` puis `[ALERTE locale L4] fall detected (… rotation 90 deg)` + buzzer | Urgence : chute |
+| MPU-6050 : `accelX` à 2 g (choc), puis `accelX` = 1, `accelZ` = 0, ne plus toucher | `[CHUTE ?] choc`, puis `[CHUTE] … alerte dans 15 s, sauf appui sur ANNULER` avec bips, puis `[ALERTE locale L4] fall detected (… rotation 90 deg)` + buzzer | Urgence : chute |
+| Même chute, puis bouton vert ANNULER pendant les bips | `[ANNULER] chute annulee par la residente`, `[ALERTE publiee L1]` ; 60 s plus tard, `[ANNULATION] residente toujours couchee : l'alerte repart` si l'on n'a pas remis `accelZ` = 1 | Information, puis Urgence |
 | MPU-6050 : choc, puis retour à `accelX` = 0, `accelZ` = 1 | `[CHUTE ECARTEE] … assis lourdement ? (regle naive du module 1 : AURAIT ALERTE)` | Rien |
 | Basculer l'interrupteur de droite | `[PORT] bracelet RETIRE`, puis 30 s plus tard `[ALERTE publiee L2] bracelet non porte` | Attention : bracelet non porté |
 | Basculer l'interrupteur de gauche / *Simulate motion* sur le PIR | `[CHAMBRE 121] porte OUVERTE` / `presence : mouvement` | Chambre 121 mise à jour |

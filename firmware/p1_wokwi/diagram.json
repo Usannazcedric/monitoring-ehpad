@@ -10,7 +10,8 @@
     { "type": "wokwi-potentiometer", "id": "potHr", "top": 40, "left": -180, "attrs": { "value": "380" } },
     { "type": "wokwi-slide-switch", "id": "swWorn", "top": 290, "left": 170, "attrs": {} },
     { "type": "wokwi-slide-switch", "id": "swDoor", "top": 290, "left": -110, "attrs": {} },
-    { "type": "wokwi-pir-motion-sensor", "id": "pir1", "top": 180, "left": -230, "attrs": {} }
+    { "type": "wokwi-pir-motion-sensor", "id": "pir1", "top": 180, "left": -230, "attrs": {} },
+    { "type": "wokwi-pushbutton", "id": "btnCancel", "top": 60, "left": 360, "attrs": { "color": "green", "label": "ANNULER" } }
   ],
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
@@ -32,7 +33,9 @@
     [ "swDoor:1", "esp:GND.1", "black", [] ],
     [ "pir1:VCC", "esp:3V3", "red", [] ],
     [ "pir1:GND", "esp:GND.1", "black", [] ],
-    [ "pir1:OUT", "esp:27", "limegreen", [] ]
+    [ "pir1:OUT", "esp:27", "limegreen", [] ],
+    [ "btnCancel:1.l", "esp:23", "green", [] ],
+    [ "btnCancel:2.l", "esp:GND.3", "black", [] ]
   ],
   "dependencies": {}
 }
