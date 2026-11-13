@@ -35,14 +35,7 @@ function useTheme() {
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="h-7 w-7 rounded-lg bg-brand-600 grid place-items-center">
-        <Moon className="h-3.5 w-3.5 text-[#fff]" strokeWidth={2.5} />
-      </div>
-      <div className="leading-tight">
-        <div className="text-[15px] font-semibold text-white tracking-tight">Veilleur</div>
-      </div>
-    </div>
+    <div className="text-[15px] font-semibold text-white tracking-tight">Veilleur</div>
   );
 }
 
