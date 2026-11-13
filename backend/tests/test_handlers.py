@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 import fakeredis.aioredis
@@ -32,7 +33,10 @@ async def test_vitals_handler_writes_redis_and_influx(cache, influx):
     await handle("vitals", "R007", payload, cache, influx)
     state = await cache.get_resident_state("R007")
     assert state and state["vitals"]["hr"] == 78
-    assert state["last_seen"] == "2026-04-29T10:00:00.000Z"
+    # last_seen = réception par le serveur (récente), measured_at = heure du capteur
+    assert state["measured_at"] == "2026-04-29T10:00:00.000Z"
+    received = datetime.fromisoformat(state["last_seen"].replace("Z", "+00:00"))
+    assert abs((datetime.now(timezone.utc) - received).total_seconds()) < 5
     influx.write_vitals.assert_awaited_once()
 
 

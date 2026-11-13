@@ -1,11 +1,24 @@
 from __future__ import annotations
 import json
+from datetime import datetime, timezone
 from typing import Any
 from ..models import VitalsPayload, MotionPayload, AmbientPayload
 from ..storage.redis import RedisCache
 from ..logging import get_logger
 
 log = get_logger("backend.ingest")
+
+
+def _received_at() -> str:
+    """Heure de réception côté serveur.
+
+    last_seen sert à repérer un capteur muet : il doit dire quand le serveur a
+    entendu le capteur, pas l'heure affichée par le capteur. L'horloge d'une carte
+    Wokwi prend du retard quand son onglet est en arrière-plan ; avec l'horodatage
+    du capteur, une carte qui émet passait pour muette. L'heure du capteur reste
+    dans measured_at et dans InfluxDB.
+    """
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 async def handle(family: str, key: str, raw: str | bytes, cache: RedisCache, influx: Any, publisher: Any | None = None) -> None:
@@ -28,7 +41,8 @@ async def handle(family: str, key: str, raw: str | bytes, cache: RedisCache, inf
 async def _handle_vitals(data: dict[str, Any], cache: RedisCache, influx: Any, publisher: Any | None) -> None:
     payload = VitalsPayload.model_validate(data)
     partial: dict[str, Any] = {
-        "last_seen": payload.timestamp,
+        "last_seen": _received_at(),
+        "measured_at": payload.timestamp,
         "vitals": payload.values.model_dump(),
     }
     sc = data.get("scenario")
@@ -49,7 +63,8 @@ async def _handle_vitals(data: dict[str, Any], cache: RedisCache, influx: Any, p
 async def _handle_motion(data: dict[str, Any], cache: RedisCache, influx: Any, publisher: Any | None) -> None:
     payload = MotionPayload.model_validate(data)
     partial: dict[str, Any] = {
-        "last_seen": payload.timestamp,
+        "last_seen": _received_at(),
+        "measured_at": payload.timestamp,
         "motion": payload.values.model_dump(),
     }
     sc = data.get("scenario")
@@ -74,7 +89,8 @@ async def _handle_ambient(family: str, data: dict[str, Any], cache: RedisCache, 
     merged = await cache.merge_room_state(room_id, {
         "room_id": room_id,
         "resident_id": payload.resident_id,
-        "last_seen": payload.timestamp,
+        "last_seen": _received_at(),
+        "measured_at": payload.timestamp,
         field: value,
     })
     if publisher is not None:
