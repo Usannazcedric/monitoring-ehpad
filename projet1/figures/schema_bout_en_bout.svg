@@ -18,7 +18,7 @@
   <rect width="1200" height="700" fill="#ffffff"/>
 
   <text x="25" y="38" font-size="20" font-weight="700" fill="#0f172a">Veilleur : du capteur à l'alerte</text>
-  <text x="25" y="58" class="note">Projet 1, cas A (chute en EHPAD), équipe 05. Données fictives.</text>
+  <text x="25" y="58" class="note">Détection des chutes des résidents en EHPAD, alerte au soignant de nuit. Équipe 05, données fictives.</text>
 
   <!-- Légende -->
   <g transform="translate(640,30)">
@@ -39,7 +39,7 @@
   <circle cx="41" cy="227" r="4" fill="#0d9488"/>
   <text class="t"><tspan x="50" y="231">Wokwi : MPU-6050,</tspan><tspan x="50" dy="15">potentiomètre (≈ FC),</tspan><tspan x="50" dy="15">bouton SOS</tspan></text>
   <circle cx="41" cy="287" r="4" fill="#ea580c"/>
-  <text class="t"><tspan x="50" y="291">Interrupteur « porté »,</tspan><tspan x="50" dy="15">détecteur de présence,</tspan><tspan x="50" dy="15">porte de chambre</tspan></text>
+  <text class="t"><tspan x="50" y="291">« Porté », présence,</tspan><tspan x="50" dy="15">porte de chambre,</tspan><tspan x="50" dy="15">bouton « Annuler »</tspan></text>
   <circle cx="41" cy="347" r="4" fill="#ea580c"/>
   <text class="t"><tspan x="50" y="351">Vraies données :</tspan><tspan x="50" dy="15">téléphone (phyphox)</tspan></text>
 
@@ -103,7 +103,7 @@
 
   <rect x="25" y="464" width="170" height="164" rx="8" class="box2"/>
   <text x="37" y="486" class="head">1. Capteurs</text>
-  <text class="t"><tspan x="37" y="508">Bracelet médical CE</tspan><tspan x="37" dy="15">(acheté) : PPG FC et</tspan><tspan x="37" dy="15">SpO2, accéléromètre</tspan><tspan x="37" dy="15">basse conso, détection</tspan><tspan x="37" dy="15">de port, bouton d'appel</tspan><tspan x="37" dy="23">Chambre : présence au</tspan><tspan x="37" dy="15">lit, porte (du commerce)</tspan></text>
+  <text class="t"><tspan x="37" y="508">Bracelet CE (acheté) :</tspan><tspan x="37" dy="15">accéléromètre basse</tspan><tspan x="37" dy="15">conso, détection de</tspan><tspan x="37" dy="15">port, boutons appel et</tspan><tspan x="37" dy="15">« Annuler », vibreur</tspan><tspan x="37" dy="23">Chambre : présence au</tspan><tspan x="37" dy="15">lit, porte (du commerce)</tspan></text>
 
   <rect x="221" y="464" width="170" height="164" rx="8" class="box2"/>
   <text x="233" y="486" class="head">2. Électronique</text>
