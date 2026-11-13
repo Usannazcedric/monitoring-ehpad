@@ -17,6 +17,8 @@ class Resident:
     seq_motion: itertools.count = field(default_factory=lambda: itertools.count(1))
     activity: str = "idle"
     scenario: str = "normal"
+    # Démo : constantes saines de référence au lieu de celles du profil (voir vitals.CALM).
+    calm: bool = False
 
     @classmethod
     def from_profile(cls, profile: Profile, seed: int | None = None) -> "Resident":
@@ -27,7 +29,7 @@ class Resident:
     def tick(self, now: datetime) -> dict[str, Any]:
         severity = 1.0 if self.scenario in {"cardiac", "degradation"} else 0.0
         v = vitals_mod.generate(self.profile, self.activity, self.rng,
-                                scenario=self.scenario, severity=severity)
+                                scenario=self.scenario, severity=severity, calm=self.calm)
         ts = now.isoformat(timespec="milliseconds").replace("+00:00", "Z")
         return {
             "timestamp": ts,

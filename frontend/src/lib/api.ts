@@ -93,6 +93,13 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     }),
+  getCalm: () => http<{ on: boolean }>(`${SIM_BASE}/calm`),
+  setCalm: (on: boolean) =>
+    http<{ on: boolean }>(`${SIM_BASE}/calm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ on }),
+    }),
   getSummary: (id: string, hours = 24) =>
     http<{ resident_id: string; hours: number; summary: string; source: "ollama" | "template" }>(
       `${API_BASE}/residents/${id}/summary?hours=${hours}`,

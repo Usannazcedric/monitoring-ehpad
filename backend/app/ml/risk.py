@@ -19,8 +19,12 @@ def compute(resident_id: str, window: list[dict[str, Any]], models_dir: str) -> 
 
 
 class RiskPublisher:
-    def __init__(self, cache: Any, mqtt: Any, influx: Any, models_dir: str, interval: float = 30.0) -> None:
+    def __init__(self, cache: Any, mqtt: Any, influx: Any, models_dir: str, interval: float = 30.0,
+                 alerts: bool = True) -> None:
         self.cache = cache
+        # Faux : le score reste publié (MQTT, Influx) mais n'entre plus dans l'état
+        # du résident, donc la règle « ml risk > 0,6 » ne peut plus lever d'alerte.
+        self.alerts = alerts
         self.mqtt = mqtt
         self.influx = influx
         self.models_dir = models_dir
@@ -39,7 +43,8 @@ class RiskPublisher:
                 if not window:
                     continue
                 scores = compute(rid, window, self.models_dir)
-                await self.cache.merge_resident_state(rid, {"risk": scores["combined"]})
+                # Sans alertes IA, on efface aussi un ancien score resté dans l'état.
+                await self.cache.merge_resident_state(rid, {"risk": scores["combined"] if self.alerts else None})
                 ts = datetime.now(timezone.utc).isoformat()
                 payload = json.dumps({
                     "resident_id": rid,

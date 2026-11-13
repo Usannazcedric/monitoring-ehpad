@@ -138,7 +138,7 @@ async def ambient_loop(resident: Resident) -> None:
             door_timer -= 5.0
             if door_open and door_timer <= 0:
                 door_open = False
-            elif not door_open and door_timer <= 0 and random.random() < 0.04:
+            elif not door_open and door_timer <= 0 and not resident.calm and random.random() < 0.04:
                 door_open = True
                 door_timer = random.uniform(4.0, 12.0)
 

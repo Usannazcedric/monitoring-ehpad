@@ -31,6 +31,23 @@ def list_residents():
     return [r.profile.model_dump() for r in _residents.values()]
 
 
+class CalmBody(BaseModel):
+    on: bool
+
+
+@router.get("/calm")
+def get_calm():
+    return {"on": any(r.calm for r in _residents.values())}
+
+
+@router.post("/calm")
+def set_calm(body: CalmBody):
+    """Mode démo : constantes saines pour tous les résidents simulés (ou retour aux profils)."""
+    for r in _residents.values():
+        r.calm = body.on
+    return {"on": body.on, "residents": len(_residents)}
+
+
 @router.post("/scenario/{resident_id}")
 def inject_scenario(resident_id: str, body: ScenarioBody):
     if resident_id not in _residents:

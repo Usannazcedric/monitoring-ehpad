@@ -16,6 +16,9 @@ class Settings:
     log_level: str
     demo_mode: bool
     models_dir: str
+    # Faux : le score de risque de l'IA est calculé et affiché, mais ne déclenche
+    # plus d'alerte (IA retirée de la finalité de la version 1, dossier P1 partie 2).
+    ml_alerts: bool = True
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -31,4 +34,5 @@ class Settings:
             log_level=os.getenv("LOG_LEVEL", "INFO"),
             demo_mode=os.getenv("DEMO_MODE", "false").lower() in ("1", "true", "yes"),
             models_dir=os.getenv("MODELS_DIR", "/models"),
+            ml_alerts=os.getenv("ML_ALERTS", "true").lower() in ("1", "true", "yes"),
         )

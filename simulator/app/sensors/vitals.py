@@ -1,7 +1,12 @@
 from __future__ import annotations
 from typing import TypedDict
 import numpy as np
-from ..profiles import Profile
+from ..profiles import Baseline, Profile
+
+# Constantes saines de référence. Les profils du MBA 1 sont souvent pathologiques
+# exprès (pouls 35, SpO2 82 %...) pour montrer tous les niveaux d'alerte ; pour une
+# démo, le mode « calme » les remplace par ces valeurs.
+CALM = Baseline(hr=72, spo2=97, sys=125, dia=78, temp=36.7)
 
 
 class Vitals(TypedDict):
@@ -19,8 +24,9 @@ def generate(
     *,
     scenario: str = "normal",
     severity: float = 0.0,
+    calm: bool = False,
 ) -> Vitals:
-    b = profile.baseline
+    b = CALM if calm else profile.baseline
     activity_hr_offset = {"idle": 0, "sitting": 0, "walking": 8, "lying": -3}.get(activity, 0)
     hr_drift = 0.0
     spo2_drift = 0.0

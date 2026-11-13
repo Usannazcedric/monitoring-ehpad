@@ -95,6 +95,9 @@ services:
       INFLUX_BUCKET: ehpad_vitals
       LOG_LEVEL: INFO
       DEMO_MODE: "true"
+      # IA retirée de la finalité de la version 1 (dossier P1, partie 2) : le score
+      # de risque reste affiché mais ne déclenche plus d'alerte.
+      ML_ALERTS: "false"
       MODELS_DIR: /models
       OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}

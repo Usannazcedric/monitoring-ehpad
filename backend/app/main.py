@@ -77,6 +77,7 @@ async def lifespan(app: FastAPI):
         influx=_influx,
         models_dir=settings.models_dir,
         interval=30.0,
+        alerts=settings.ml_alerts,
     )
     _risk_task = asyncio.create_task(_risk_publisher.loop())
 

@@ -34,3 +34,18 @@ def test_tick_seq_is_monotonic():
     seqs = [r.tick(now)["seq"] for _ in range(5)]
     assert seqs == sorted(seqs)
     assert len(set(seqs)) == 5
+
+
+def test_calm_mode_replaces_a_pathological_baseline():
+    from app.profiles import Profile, Baseline, Routine
+    sick = Profile(
+        id="R901", name="X", age=90, room="901", mobility="bedridden", pathologies=[],
+        baseline=Baseline(hr=35, spo2=82, sys=90, dia=55, temp=36.2),
+        routine=Routine(wake="07:00", sleep="22:00", meals=["08:00", "12:30", "19:00"]),
+    )
+    r = Resident.from_profile(sick, seed=1)
+    r.activity = "sitting"
+    r.calm = True
+    v = r.tick(datetime(2026, 11, 13, 3, 0, tzinfo=timezone.utc))["values"]
+    assert 60 <= v["hr"] <= 85
+    assert v["spo2"] >= 95

@@ -112,10 +112,14 @@ export function DemoPage() {
   const [room, setRoom] = useState("R007");
   const [sent, setSent] = useState<string | null>(null);
   const [, setTick] = useState(0);
+  const [calm, setCalm] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const check = () => api.health().then(() => !cancelled && setServerOk(true)).catch(() => !cancelled && setServerOk(false));
+    const check = () => {
+      api.health().then(() => !cancelled && setServerOk(true)).catch(() => !cancelled && setServerOk(false));
+      api.getCalm().then((r) => !cancelled && setCalm(r.on)).catch(() => !cancelled && setCalm(null));
+    };
     check();
     const t = setInterval(() => { check(); setTick((x) => x + 1); }, 3000);
     return () => { cancelled = true; clearInterval(t); };
@@ -129,10 +133,21 @@ export function DemoPage() {
     [residents],
   );
 
+  const toggleCalm = async (on: boolean) => {
+    try { setCalm((await api.setCalm(on)).on); } catch { setCalm(null); }
+  };
+
+  // Sans mode calme, les résidents simulés renvoient leurs constantes anormales
+  // et chaque alerte clôturée se rouvre à la mesure suivante (1 s).
   const resetAll = async () => {
     setBusy(true);
     try {
-      for (const a of open) {
+      if (!calm) {
+        await toggleCalm(true);
+        await new Promise((r) => setTimeout(r, 3000)); // laisser arriver des mesures saines
+      }
+      const current = [...useStore.getState().alerts.values()].filter((a) => a.status !== "resolved");
+      for (const a of current) {
         try { upsertAlert(await api.resolveAlert(a.id)); } catch { /* déjà fermée */ }
       }
     } finally {
@@ -198,6 +213,23 @@ export function DemoPage() {
             </div>
             <label className="flex cursor-pointer items-center justify-between gap-4">
               <div>
+                <div className="font-medium text-zinc-100">Résidents simulés au calme</div>
+                <div className="text-zinc-500">
+                  {calm === null ? "simulateur injoignable" : "Constantes saines : plus d'alerte qui se rouvre. Activé par « Tout clôturer »."}
+                </div>
+              </div>
+              <button
+                role="switch"
+                aria-checked={!!calm}
+                disabled={calm === null}
+                onClick={() => toggleCalm(!calm)}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40 ${calm ? "bg-zinc-100" : "bg-zinc-700"}`}
+              >
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-zinc-950 shadow transition-all ${calm ? "left-[22px]" : "left-0.5"}`} />
+              </button>
+            </label>
+            <label className="flex cursor-pointer items-center justify-between gap-4">
+              <div>
                 <div className="font-medium text-zinc-100">Mode présentation</div>
                 <div className="text-zinc-500">N'afficher que la chambre 121, le bracelet Wokwi.</div>
               </div>
@@ -212,8 +244,8 @@ export function DemoPage() {
             </label>
             <p className="rounded-lg bg-zinc-800 px-3 py-2.5 text-[12px] text-zinc-400">
               Les 20 résidents simulés du MBA 1 ont des constantes de départ anormales, exprès, pour montrer tous les niveaux.
-              Leurs alertes reviennent en quelques secondes et montent seules en Danger vital en une dizaine de minutes :
-              pour la démo, le mode présentation les cache.
+              Sans le mode calme, leurs alertes reviennent dès la mesure suivante et montent seules en Danger vital en une
+              dizaine de minutes. Le mode calme leur donne des constantes saines ; le plan B (scénarios) marche toujours.
             </p>
           </div>
         </Panel>
