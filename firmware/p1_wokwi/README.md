@@ -41,7 +41,9 @@ Interrupteurs en pull-up interne : en position de départ, la broche est à la m
 
 ## Lancer
 
-Comme au module 1 : sur [wokwi.com](https://wokwi.com), *New Project* → **ESP32**, coller
+**Le plus simple** : `./demo.sh` à la racine du dépôt. Il lance la stack, puis ouvre le tableau de bord et le projet Wokwi sauvegardé, https://wokwi.com/projects/480574192585000961. Il ne reste qu'à cliquer sur ▶.
+
+À la main, comme au module 1 : sur [wokwi.com](https://wokwi.com), *New Project* → **ESP32**, coller
 [`diagram.json`](diagram.json) et [`sketch.ino`](sketch.ino), ajouter **PubSubClient**
 par le *Library Manager*, puis ▶. En local, `./build.sh` puis *Wokwi: Start Simulator*
 dans VS Code (voir le README du module 1).
