@@ -23,7 +23,7 @@ Ce dépôt **continue** le projet de l'an dernier (Digi4), archivé tel quel sur
 | Simulation Wokwi — Projet 1 (bracelet : chute, boutons ANNULER et CHUTE) | [wokwi.com/projects/480574192585000961](https://wokwi.com/projects/480574192585000961) |
 | Vidéo de secours du Projet 1 (3 min) — [script](projet1/video_secours.md) | **Lien Teams ou Drive à ajouter avant le 27/11, 11:00** (pas de fichier vidéo dans le dépôt) |
 | Simulation Wokwi — module 1 (carte de base) | [wokwi.com/projects/476778339332099073](https://wokwi.com/projects/476778339332099073) |
-| Démonstration vidéo — carte ESP32 → dashboard (39 s) | [`firmware/m1_wokwi/docs/demo-chaine-complete.mp4`](firmware/m1_wokwi/docs/demo-chaine-complete.mp4) |
+| Démonstration vidéo du module 1 — carte ESP32 → dashboard (39 s) | Retirée du dépôt le 21/11 : le Projet 1 interdit les fichiers vidéo dans le dépôt. Les captures qui en sont extraites sont dans [`firmware/m1_wokwi/docs/`](firmware/m1_wokwi/docs/) |
 
 Le firmware ESP32 publie sur les **mêmes topics et les mêmes formats JSON** que le
 simulateur Python : le backend, le moteur d'alertes et le dashboard décrits ci-dessous

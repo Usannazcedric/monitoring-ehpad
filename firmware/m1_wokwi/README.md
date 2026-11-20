@@ -226,7 +226,8 @@ curl -s http://localhost:8000/residents/R021 | python3 -m json.tool
 
 ## Démonstration
 
-**[`docs/demo-chaine-complete.mp4`](docs/demo-chaine-complete.mp4)** — 39 s.
+**Vidéo de 39 s** (`demo-chaine-complete.mp4`), retirée du dépôt le 21/11 : le Projet 1
+interdit les fichiers vidéo dans le dépôt. Elle reste sur le poste de l'équipe.
 Dashboard à gauche, simulateur Wokwi et moniteur série à droite.
 
 On y voit, dans l'ordre :
