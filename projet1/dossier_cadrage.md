@@ -331,7 +331,7 @@ Le projet Wokwi du module 1 ([`firmware/m1_wokwi/`](../firmware/m1_wokwi/)) est 
 | **Retenu** : BLE, signe de vie toutes les 5 min (port et batterie, 0,1 s), sommeil profond, réveil sur choc (onglet « Cas équipe ») | 0,43 mA | **71,6 jours** | 5,8 jours | **21,5 jours** |
 | Retenu + 10 réveils sur choc par jour (4 s de calcul et envoi de la fenêtre d'accélération) | 0,47 mA | 65,6 jours | 5,7 jours | 19,7 jours |
 | Signe de vie toutes les minutes au lieu de 5 | 2,1 mA | 14,7 jours | 4,4 jours | 4,4 jours |
-| Retenu + MPU-6050 allumé en continu, accéléromètre seul (≈ 0,5 mA, **à vérifier** sur la fiche) | 0,93 mA | 33,4 jours | 5,3 jours | 10,0 jours |
+| Retenu + MPU-6050 allumé en continu, accéléromètre seul (0,5 mA, fiche InvenSense vérifiée le 20/11) | 0,93 mA | 33,4 jours | 5,3 jours | 10,0 jours |
 | Retenu + MPU-6050 accéléromètre **et gyroscope** (3,9 mA, valeur du calculateur) | 4,3 mA | 7,2 jours | 3,3 jours | 2,2 jours |
 
 **Les hypothèses, et ce qu'elles valent :**
@@ -340,7 +340,7 @@ Le projet Wokwi du module 1 ([`firmware/m1_wokwi/`](../firmware/m1_wokwi/)) est 
 2. **Retirer le pouls a tout changé.** Le 30/10, une mesure de pouls et d'oxygène de 10 s toutes les 5 min donnait 4,5 jours sur 300 mAh, sous l'objectif de 7 jours. Sans elle : 21,5 jours. Recentrer la finalité sur la chute (2.1) simplifie aussi l'électronique.
 3. **BLE plutôt que Wi-Fi** : un bracelet par résident en Wi-Fi charge le réseau de l'établissement. Il faut donc une passerelle par chambre ou par couloir (partie 3).
 4. **La carte compte autant que la puce** : sur une carte de développement (DevKit), le régulateur consomme environ 5 mA en permanence et l'autonomie plafonne autour de 6 jours, quoi qu'on fasse. Le vrai produit a besoin d'une électronique basse consommation, c'est un argument de plus pour acheter le bracelet (3.2).
-5. **L'accéléromètre doit rester allumé** pour ne rater aucun choc. Le MPU-6050 du kit, gyroscope compris, ramène l'autonomie à 2,2 jours sur 300 mAh : il faut couper le gyroscope (10 jours), ou mieux, un accéléromètre qui détecte lui-même le choc et réveille la carte, pour quelques µA.
+5. **L'accéléromètre doit rester allumé** pour ne rater aucun choc. Le MPU-6050 du kit, gyroscope compris, ramène l'autonomie à 2,2 jours sur 300 mAh : il faut couper le gyroscope (10 jours), ou mieux, un accéléromètre qui détecte lui-même le choc et réveille la carte, pour quelques µA. **Vérifié le 20/11** sur la fiche du MPU-6050 : 0,5 mA en mode normal. Son mode basse consommation (10 à 140 µA) ne mesure qu'à 40 Hz au plus, alors que notre règle tourne à 50 Hz. Avec ce capteur, l'autonomie honnête du bracelet est donc de **10 jours sur 300 mAh**, pas 21,5. Le MPU-6050 est d'ailleurs en fin de vie chez son fabricant (TDK), qui recommande l'ICM-42670-P.
 6. **Ce que le calcul ne voit pas** : le nombre réel de réveils (une résidente agitée cogne son bracelet), le coût réel d'une connexion BLE, le vibreur du compte à rebours « Annuler », le froid et le vieillissement de la batterie. **Tout cela se mesure au Projet 2**, avec le vrai kit.
 
 ---
