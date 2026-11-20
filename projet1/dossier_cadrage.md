@@ -284,9 +284,36 @@ Le projet Wokwi du module 1 ([`firmware/m1_wokwi/`](../firmware/m1_wokwi/)) est 
 
 **Ce que ces chiffres ne prouvent pas** :
 - Les chutes sont **simulées par de jeunes volontaires sur un tapis** (un seul senior a fait les chutes). Une personne âgée tombe plus lentement, et souvent sans choc franc (5.3, ligne 4).
-- Le capteur est **à la taille**, pas au poignet : un bracelet bouge beaucoup plus et fera davantage de fausses alertes.
+- Le capteur est **à la taille**, pas au poignet : un bracelet bouge beaucoup plus et fera davantage de fausses alertes. **Mesuré le 20/11 : c'est pire que prévu** (benchmark ci-dessous).
 - Les **fausses alertes par heure** sont comptées sur des activités choisies pour être difficiles, enchaînées en 14,5 h. Ce n'est pas une nuit réelle, où l'on dort surtout.
 - Enfin, ce ne sont **pas nos propres enregistrements** : la série phyphox reste à faire pour la démo.
+
+#### Benchmark du 20 novembre : notre règle à la taille, au cou et au poignet
+
+**Source** : en plus de SisFall, le jeu public **FallAllD** (Saleh, Abbas et Le Jeannès, *IEEE Sensors Journal* 21(2):1849-1858, 2021), même copie [ts_fall_detection](https://github.com/mlgig/ts_fall_detection). 15 volontaires, capteurs **au cou, à la taille et au poignet**, chutes simulées sur matelas. **Ce ne sont pas nos enregistrements**, mais c'est la première fois que notre règle tourne sur des données **au poignet**, la position de notre bracelet. Script : [`traitement/benchmark_regles.py`](traitement/benchmark_regles.py) ; résultats complets : [`resultats/benchmark/resume.md`](resultats/benchmark/resume.md).
+
+**Le résultat** : la même règle P1 (choc > 2 g, immobile 3 s, rotation > 50°), sans rien changer.
+
+| Jeu | Position du capteur | Chutes | Chutes détectées | Fausses alertes par heure |
+| --- | --- | --- | --- | --- |
+| SisFall | taille | 1 798 | **97,2 %** | **3,0** |
+| FallAllD | taille | 466 | 74,2 % | 9,1 |
+| FallAllD | cou (pendentif) | 733 | 68,1 % | 4,9 |
+| FallAllD | **poignet (notre bracelet)** | 523 | **51,6 %** | **16,1** |
+
+![Sept règles sur quatre jeux](resultats/benchmark/regles_par_jeu.png)
+
+![75 réglages de la règle P1](resultats/benchmark/balayage_reglages.png)
+
+**Ce qu'on en tire :**
+
+1. **Au poignet, notre règle rate une chute sur deux** (51,6 %) et fait 16 fausses alertes par heure. Sur les 253 chutes ratées, 145 le sont parce que **le bras ne reste jamais immobile 3 s**, et 108 parce que **le poignet ne tourne pas de plus de 50°** alors que le corps est au sol. La règle suppose que le capteur suit le tronc ; le poignet ne le suit pas. Ce n'est pas un effet de la coupure des enregistrements : il reste 10 s de signal après le choc, en médiane.
+2. **Changer les seuils ne suffit pas.** Sur 75 réglages essayés (choc de 1,5 à 3 g, immobilité de 0,03 à 0,08 g, rotation de 30 à 70°), aucun ne dépasse 70 % de chutes détectées au poignet, et le meilleur compromis plafonne vers 60 % pour 11 fausses alertes par heure. À la taille dans SisFall, aucun réglage ne fait mieux que le nôtre sur les deux critères à la fois.
+3. **Chaque étape de la règle compte.** Sans la rotation, les fausses alertes sont multipliées par 19 à la taille (58 par heure au lieu de 3) et par 4 au poignet. Sans l'immobilité, par 2 au poignet. La règle à chute libre du TP M2-2 ne détecte presque rien, quelle que soit la position (4 à 13 %).
+4. **Le délai** : la décision tombe 4 s après le choc en médiane (90 % des chutes en moins de 6 à 13 s). Avec les 15 s du bouton « Annuler », le soignant reçoit l'alerte environ **19 s** après la chute.
+5. **Conséquence pour le produit** : la détection de chute ne doit pas reposer sur cette règle **au poignet**. Trois pistes, à trancher en équipe : porter le capteur au cou ou à la taille (pendentif ou clip : 68 à 74 % de chutes détectées ici, et 5 à 9 fausses alertes par heure au lieu de 16) ; garder le bracelet mais apprendre une règle propre au poignet sur ces données (Projet 2) ; ou garder le bracelet et compter davantage sur les capteurs de chambre et les rondes. **Les risques n° 4 et 5 (5.3) sont à recoter** : leur probabilité résiduelle de 2 reposait sur des chiffres mesurés à la taille.
+
+**Limites** : chutes de volontaires jeunes sur matelas ; signal rééchantillonné de 238 à 100 Hz ; FallAllD compte moins d'essais que SisFall (de 466 à 733 chutes par position) ; et les fausses alertes par heure portent sur des activités choisies pour être difficiles, pas sur une nuit réelle.
 
 ### 4.3 Pour le 13 novembre
 
