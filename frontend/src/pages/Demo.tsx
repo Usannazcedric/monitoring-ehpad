@@ -19,7 +19,7 @@ const STEPS: { time: string; title: string; doIt: string; say: string }[] = [
   {
     time: "45 s", title: "Le montage dans Wokwi",
     doIt: "Montrer chaque composant de la carte.",
-    say: "« Le MPU-6050, c'est l'accéléromètre du bracelet. Bouton rouge : appel. Bouton vert : annuler. Interrupteurs : bracelet porté, porte de la chambre. Le potentiomètre de pouls vient du module 1, il est hors finalité. »",
+    say: "« Le MPU-6050, c'est l'accéléromètre du bracelet. Bouton rouge : appel. Bouton vert : annuler. Bouton jaune : il rejoue une chute pour la démo, c'est la vraie règle qui juge. Interrupteurs : bracelet porté, porte de la chambre. Le potentiomètre de pouls vient du module 1, il est hors finalité. »",
   },
   {
     time: "45 s", title: "La situation normale",
@@ -28,23 +28,23 @@ const STEPS: { time: string; title: string; doIt: string; say: string }[] = [
   },
   {
     time: "1 min", title: "L'événement : une chute",
-    doIt: "MPU-6050 : X à 2 g, puis X = 1 et Z = 0, ne plus toucher. Bips 15 s, puis Urgence. Cliquer « Je prends en charge ». Variante : appuyer sur ANNULER pendant les bips.",
+    doIt: "Appuyer sur le bouton jaune CHUTE (ou MPU-6050 : X à 2 g, puis X = 1 et Z = 0). Bips 15 s, puis Urgence. Cliquer « Je prends en charge ». Variante : ANNULER pendant les bips. Second appui sur CHUTE : elle est relevée.",
     say: "« Choc, immobilité, position couchée : chute. Elle a 15 secondes pour annuler. L'alerte arrive chez le soignant de nuit ; sans réponse, elle monte jusqu'à l'opérateur, puis le 15. »",
   },
   {
     time: "1 min", title: "Les vraies données",
-    doIt: "Montrer la figure SisFall du dossier (partie 4.2).",
-    say: "« Sur 1 798 chutes du jeu public SisFall, notre règle en détecte 97 %, avec 3 fausses alertes par heure. La règle « chute libre » du module 2 n'en voit que 13 % : une personne ne tombe pas comme un téléphone. »",
+    doIt: "Montrer la figure du benchmark (dossier, partie 4.2) : taille, cou, poignet.",
+    say: "« Sur 1 798 chutes du jeu public SisFall, capteur à la taille, notre règle en détecte 97 %, avec 3 fausses alertes par heure. Mais sur le jeu FallAllD, au poignet, elle n'en détecte que 52 % : le bras bouge après la chute. C'est notre limite principale, et nous l'avons mesurée. »",
   },
   {
     time: "30 s", title: "Robustesse et autonomie",
     doIt: "Basculer l'interrupteur « porté » : plus de mesures, puis alerte au bout de 30 s.",
-    say: "« Bracelet retiré : on n'envoie rien de faux, et le poste est prévenu. Autonomie calculée : 21,5 jours sur 300 mAh, avec ces hypothèses. »",
+    say: "« Bracelet retiré : on n'envoie rien de faux, et le poste est prévenu. Autonomie calculée : 10 jours sur 300 mAh avec l'accéléromètre du kit, 21,5 avec un accéléromètre qui réveille la carte sur un choc. »",
   },
   {
     time: "30 s", title: "Les limites",
     doIt: "Rester sur le tableau de bord.",
-    say: "« Nos chutes de référence sont jouées par des jeunes sur un tapis, avec un capteur à la taille. Le vrai bracelet et les vrais essais arrivent au Projet 2. »",
+    say: "« Nos chutes de référence sont jouées par des jeunes sur un tapis. Au poignet, la règle rate une chute sur deux : au Projet 2, soit une règle apprise sur des données au poignet, soit un capteur au cou. »",
   },
 ];
 
