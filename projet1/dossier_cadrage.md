@@ -459,7 +459,7 @@ L'AIPD suit la méthode de la CNIL. Elle regarde les risques du point de vue des
 | --- | --- | --- | --- | --- |
 | Identité et chambre de la résidente, numéro du bracelet associé | Envoyer l'alerte dans la bonne chambre | Soignants de l'étage, cadre de santé | Hébergeur certifié pour les données de santé (HDS), en France | Durée du séjour ; supprimées quand le bracelet est dissocié (fin d'usage, 1.3) |
 | **L'alerte de chute** : heure, chambre, annulée ou non, qui l'a prise en charge et quand, motif de clôture | Faire intervenir le soignant, tracer la prise en charge, adapter la prévention des chutes | Voir le tableau « qui voit quoi » ci-dessous | HDS, en France | **1 an** dans Veilleur (**hypothèse**, à arbitrer avec le DPO), puis effacement. Le compte rendu de chute est versé au dossier de soins, qui suit ses propres règles de conservation |
-| Accélération autour d'une chute (quelques secondes) | Vérifier une alerte douteuse, améliorer la règle | Référent technique et qualité, **sans le nom** (pseudonymisée) | HDS, en France | 30 jours (**hypothèse**), puis effacement |
+| Accélération autour d'une chute (quelques secondes) | Vérifier une alerte douteuse. **Pas pour améliorer la règle** : c'est une autre finalité (voir ci-dessous, ajout du 20/11) | Référent technique et qualité, **sans le nom** (pseudonymisée) | HDS, en France | 30 jours (**hypothèse**), puis effacement |
 | Port du bracelet, batterie, signe de vie | Ne jamais confondre un silence avec « tout va bien » | Soignants (bandeau sur la fiche), référent technique | HDS, en France | 30 jours (**hypothèse**) |
 | Présence au lit et ouverture de la porte (capteurs de chambre) | Voir une chute que le bracelet a ratée (5.3, ligne 4) | Soignants de l'étage | HDS, en France | 30 jours (**hypothèse**) |
 
@@ -485,6 +485,12 @@ L'AIPD suit la méthode de la CNIL. Elle regarde les risques du point de vue des
 - **Le message à la famille demande l'accord de la résidente**, ou de son représentant légal ou de sa personne de confiance si elle ne peut pas consentir (rupture R2).
 - **Droits** : accès, rectification et opposition se demandent au DPO de l'EHPAD. L'effacement est limité par l'obligation de tenir le dossier de soins (**à vérifier** avec le DPO).
 - **L'information est répétée** à chaque réévaluation du risque de chute (tous les 3 mois, M5).
+
+**Compléments du 20 novembre** (relecture de la partie 6 avant la soutenance) :
+
+- **Les soignants sont aussi des personnes concernées.** L'alerte garde qui l'a prise en charge et en combien de temps. Ce journal sert à tracer la prise en charge. Il ne doit **pas** servir à évaluer un soignant individuellement : seuls des chiffres par équipe et par mois sortent du service. Le comité social et économique (CSE) de l'EHPAD est informé avant la mise en service, comme pour tout outil qui peut mesurer l'activité du personnel.
+- **Améliorer la règle de chute est une seconde finalité, distincte du soin.** Le benchmark du 20/11 (4.2) montre qu'au poignet notre règle rate une chute sur deux : il faudra de vraies données au poignet pour l'améliorer. Ce n'est pas la prise en charge de la résidente, c'est de la recherche du fabricant. Elle demande sa propre base légale et une information séparée. Si c'est de la recherche en santé, il faut aussi suivre une méthodologie de référence de la CNIL (**à vérifier** avec le DPO). En pratique : une case à part dans la notice d'admission, refusable sans effet sur le soin, et des données pseudonymisées qui ne quittent l'EHPAD qu'avec cet accord. **En version 1, rien n'est collecté pour cette finalité.**
+- **Les sous-traitants**, liés à l'EHPAD par un contrat (RGPD, article 28) : l'hébergeur HDS, le fabricant du bracelet (maintenance, sans accès aux noms) et la société de télésurveillance (seulement les alertes qui lui escaladent). **Aucun transfert hors de l'Union européenne** n'est prévu dans le vrai produit. Le prototype, lui, passe par un broker public dont nous ne connaissons pas l'hébergement : c'est une raison de plus pour n'y faire passer que des données fictives (6.4).
 
 ### 6.3 Les 3 risques pour les personnes
 
@@ -516,7 +522,7 @@ Gravité : 1 = gêne passagère, 4 = conséquences graves ou irréversibles. Vra
 
 - **En l'état, le prototype n'est pas acceptable pour des données réelles** : il n'a ni login ni chiffrement, et passe par un broker public. C'est pourquoi il ne tourne qu'avec des données fictives.
 - **Après les mesures de 6.4**, les trois risques descendent à une vraisemblance de 1 : ils deviennent acceptables.
-- **Il reste à faire** : faire valider cette AIPD par le DPO d'un EHPAD, qui est le responsable de traitement. Il faut aussi arbitrer les durées (1 an et 30 jours sont des hypothèses), vérifier la base légale (prise en charge sanitaire et médico-sociale, article 9.2.h) et signer le contrat avec l'hébergeur HDS.
+- **Il reste à faire** (au 20/11, toujours pas fait : chaque choix non validé reste marqué **hypothèse**) : faire valider cette AIPD par le DPO d'un EHPAD, qui est le responsable de traitement, et informer son CSE. Il faut aussi arbitrer les durées (1 an et 30 jours sont des hypothèses), vérifier la base légale (prise en charge sanitaire et médico-sociale, article 9.2.h) et signer le contrat avec l'hébergeur HDS.
 - **Le point le plus sensible reste le message à la famille** : il n'est envoyé qu'avec l'accord de la résidente.
 
 ---
