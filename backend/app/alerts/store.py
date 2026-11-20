@@ -23,8 +23,12 @@ class AlertStore:
         self.redis = redis
         self.influx = influx
 
-    async def create(self, resident_id: str, level: AlertLevel, reason: str) -> Alert:
-        alert_id = uuid.uuid4().hex
+    async def create(self, resident_id: str, level: AlertLevel, reason: str,
+                     alert_id: str | None = None) -> Alert:
+        # L'id du bracelet est garde s'il est libre : le meme id dans le moniteur
+        # serie et sur le tableau de bord.
+        if not alert_id or await self.redis.exists(DETAIL_KEY.format(id=alert_id)):
+            alert_id = uuid.uuid4().hex
         now = _now_iso()
         alert = Alert(
             id=alert_id,

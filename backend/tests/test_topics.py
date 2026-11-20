@@ -30,3 +30,10 @@ def test_parse_unknown_topic_returns_other():
     fam, key = topics.parse("ehpad/garbage/foo/bar")
     assert fam == "other"
     assert key is None
+
+
+def test_device_alert_topic_is_subscribed_and_parsed():
+    assert "ehpad/alerts/new" in topics.SUBSCRIBE_PATTERNS
+    fam, key = topics.parse("ehpad/alerts/new")
+    assert fam == "device_alert"
+    assert key == "new"

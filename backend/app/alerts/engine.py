@@ -30,9 +30,23 @@ class AlertEngine:
             return
 
         new_level, reason = result
+        await self._raise(resident_id, int(new_level), reason, existing)
 
+    async def raise_device_alert(self, resident_id: str, level: int, reason: str,
+                                 alert_id: str | None = None) -> None:
+        """Alerte envoyee par le bracelet (SOS, bracelet retire, annulation).
+
+        Le backend ne peut pas la deduire des mesures : il la prend telle quelle,
+        avec les memes regles que les siennes (une alerte active par resident,
+        montee de niveau, escalade), pour qu'elle soit enregistree et prise en charge.
+        """
+        existing = await self.store.get_active_for_resident(resident_id)
+        await self._raise(resident_id, int(level), reason, existing, alert_id=alert_id)
+
+    async def _raise(self, resident_id: str, new_level: int, reason: str, existing,
+                     alert_id: str | None = None) -> None:
         if existing is None:
-            alert = await self.store.create(resident_id, new_level, reason)
+            alert = await self.store.create(resident_id, new_level, reason, alert_id=alert_id)
             await self.publisher.publish_new(alert)
             try:
                 self.escalation.schedule(alert.id, alert.level, self._on_escalate)
@@ -40,7 +54,7 @@ class AlertEngine:
                 log.error("schedule_failed", alert_id=alert.id, err=str(exc))
             return
 
-        if int(new_level) > existing.level:
+        if new_level > existing.level:
             updated = await self.store.update_level(existing.id, new_level, reason)
             if updated is not None:
                 await self.publisher.publish_update(updated)

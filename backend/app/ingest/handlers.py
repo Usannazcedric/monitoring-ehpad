@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 from ..models import VitalsPayload, MotionPayload, AmbientPayload
 from ..storage.redis import RedisCache
+from ..profiles import PROFILES
 from ..logging import get_logger
 
 log = get_logger("backend.ingest")
@@ -40,6 +41,38 @@ def _storage_time(device_ts: str, received: str) -> str:
     if dev.tzinfo is None:
         return received
     return device_ts if abs((rec - dev).total_seconds()) <= CLOCK_DRIFT_MAX_S else received
+
+
+REASON_MAX_LEN = 200
+
+
+def parse_device_alert(raw: str | bytes) -> tuple[str, int, str, str | None] | None:
+    """(resident_id, level, reason, id) d'une alerte du bracelet, ou None.
+
+    Le topic ehpad/alerts/new porte aussi les alertes du backend : seules celles
+    marquees source == "esp32" sont prises. Le broker est public : un resident
+    inconnu ou un niveau hors 1..5 est ignore.
+    """
+    try:
+        data = json.loads(raw)
+    except (ValueError, TypeError):
+        log.warning("invalid_json", family="device_alert")
+        return None
+    if not isinstance(data, dict) or data.get("source") != "esp32":
+        return None
+    rid = data.get("resident_id")
+    reason = data.get("reason")
+    try:
+        level = int(data.get("level"))
+    except (TypeError, ValueError):
+        level = 0
+    if rid not in PROFILES or not 1 <= level <= 5 or not isinstance(reason, str) or not reason:
+        log.warning("device_alert_rejected", resident_id=rid, level=data.get("level"))
+        return None
+    aid = data.get("id")
+    if not isinstance(aid, str) or not aid.isalnum() or len(aid) > 64:
+        aid = None
+    return rid, level, reason[:REASON_MAX_LEN], aid
 
 
 async def handle(family: str, key: str, raw: str | bytes, cache: RedisCache, influx: Any, publisher: Any | None = None) -> None:

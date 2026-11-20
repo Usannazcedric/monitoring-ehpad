@@ -11,9 +11,11 @@ def test_demo_mode_compresses_delays():
     assert prod[2] == 600
     assert prod[3] == 300
     assert prod[4] == 180
-    assert demo[2] == 60
-    assert demo[3] == 30
-    assert demo[4] == 18
+    # Demo : 5, 3 et 2 minutes, le temps de montrer la prise en charge en soutenance.
+    assert demo[2] == 300
+    assert demo[3] == 180
+    assert demo[4] == 120
+    assert all(demo[k] < prod[k] for k in prod)
 
 
 async def test_schedule_fires_after_delay_demo_mode_short():

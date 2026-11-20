@@ -43,6 +43,9 @@ export function useBootstrap() {
         if (t.startsWith("state/resident/")) {
           setResident(env.data);
         } else if (t === "alerts/new") {
+          // Alerte brute du bracelet : le backend l'enregistre et la republie
+          // (sans "source"). La garder ici l'afficherait deux fois.
+          if (env.data?.source === "esp32") return;
           upsertAlert(env.data);
           if (env.data?.level >= 3 && isShown(env.data.resident_id as string, useStore.getState().presentation)) {
             const info = residentInfo(env.data.resident_id as string);

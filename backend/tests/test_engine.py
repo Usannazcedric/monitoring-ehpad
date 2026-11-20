@@ -71,3 +71,42 @@ async def test_does_not_downgrade_active_alert(deps):
     a = await store.get_active_for_resident("R001")
     assert a is not None
     assert a.level == 4  # sticky
+
+
+async def test_device_alert_is_stored_with_device_id(deps):
+    engine, store, pub, esc = deps
+    await engine.raise_device_alert("R021", 2, "bracelet non porte depuis 30 s", alert_id="abc123")
+    a = await store.get_active_for_resident("R021")
+    assert a is not None
+    assert a.id == "abc123"
+    assert a.level == 2
+    pub.publish_new.assert_awaited_once()
+    esc.schedule.assert_called_once()
+
+
+async def test_device_sos_upgrades_existing_alert(deps):
+    engine, store, pub, _esc = deps
+    await engine.raise_device_alert("R021", 2, "bracelet non porte depuis 30 s")
+    await engine.raise_device_alert("R021", 5, "appel SOS du resident")
+    a = await store.get_active_for_resident("R021")
+    assert a.level == 5
+    assert a.reason == "appel SOS du resident"
+    pub.publish_update.assert_awaited_once()
+
+
+async def test_device_alert_does_not_downgrade(deps):
+    engine, store, pub, _esc = deps
+    await engine.raise_device_alert("R021", 5, "appel SOS du resident")
+    await engine.raise_device_alert("R021", 1, "chute annulee par la residente")
+    a = await store.get_active_for_resident("R021")
+    assert a.level == 5
+    pub.publish_update.assert_not_awaited()
+
+
+async def test_device_alert_id_already_used_gets_a_new_one(deps):
+    engine, store, _pub, _esc = deps
+    first = await store.create("R021", 2, "x", alert_id="dup1")
+    await store.set_status(first.id, "resolved")
+    await engine.raise_device_alert("R021", 2, "bracelet non porte depuis 30 s", alert_id="dup1")
+    a = await store.get_active_for_resident("R021")
+    assert a is not None and a.id != "dup1"

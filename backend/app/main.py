@@ -41,6 +41,15 @@ _risk_task: asyncio.Task | None = None
 
 async def _dispatch(family: str, key: str, payload: bytes) -> None:
     assert _cache is not None and _influx is not None
+    if family == "device_alert":
+        parsed = h.parse_device_alert(payload)
+        if parsed is not None and _engine is not None:
+            rid, level, reason, aid = parsed
+            try:
+                await _engine.raise_device_alert(rid, level, reason, alert_id=aid)
+            except Exception as exc:  # noqa: BLE001 -- ingest must never crash
+                log.error("device_alert_failed", resident_id=rid, err=str(exc))
+        return
     await h.handle(family, key, payload, _cache, _influx, _mqtt)
 
 
