@@ -189,6 +189,17 @@ const unsigned long SCRIPT_IMPACT_MS = 200;  // duree du choc rejoue
 int lastFallBtn = HIGH;
 unsigned long lastFallBtnChange = 0;
 
+// Poignet simule (Wokwi). Les curseurs du MPU-6050 et le potentiometre sont fixes,
+// un vrai poignet ne l'est jamais : la carte ajoute un leger tremblement, un geste
+// du bras toutes les 8 a 20 s (1,5 s, moins de 1,2 g) et un pouls qui varie un peu.
+// Rien n'approche le seuil de choc (2 g) : la chute reste jugee sur les curseurs ou
+// le bouton CHUTE. Pas de geste pendant l'analyse d'un choc, le compte a rebours,
+// ni quand la residente est allongee. Mettre false sur la vraie carte.
+const bool WRIST_SIM = true;
+const unsigned long GESTURE_MS = 1500;
+unsigned long nextGestureAt = 8000, gestureUntil = 0;
+bool gestureActive() { return WRIST_SIM && millis() < gestureUntil; }
+
 // ======================= 5. MPU-6050 EN DIRECT (registres I2C) =======================
 void mpuWrite(uint8_t reg, uint8_t value) {
   Wire.beginTransmission(MPU_ADDR);
@@ -245,6 +256,11 @@ int readHeartRate() {
   int raw = analogRead(PIN_HR_POT);       // 0..4095 (ADC 12 bits)
   int bpm = map(raw, 0, 4095, 30, 180);   // potentiometre -> 30..180 bpm
   bpm += (int)random(-2, 3);              // petit bruit de mesure
+  if (WRIST_SIM) {
+    // Pouls jamais plat : +/- 3 bpm sur 40 s (respiration), +4 bpm pendant un geste.
+    bpm += (int)lround(3.0 * sin(2 * PI * millis() / 40000.0));
+    if (gestureActive()) bpm += 4;
+  }
   return constrain(bpm, 30, 180);
 }
 
@@ -291,9 +307,19 @@ void connectWifi() {
   Serial.printf("Wi-Fi : connexion a %s", WIFI_SSID);
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD, WIFI_CHANNEL);
+  unsigned long wifiStart = millis();
   while (WiFi.status() != WL_CONNECTED) {
     delay(250);
     Serial.print(".");
+    // Le Wi-Fi simule de Wokwi reste parfois bloque : nouvel essai toutes les 20 s
+    // au lieu d'attendre sans fin.
+    if (millis() - wifiStart > 20000) {
+      Serial.print("\nWi-Fi : pas de reponse en 20 s, nouvel essai");
+      WiFi.disconnect();
+      delay(100);
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD, WIFI_CHANNEL);
+      wifiStart = millis();
+    }
   }
   Serial.printf("\nWi-Fi OK, IP = %s\n", WiFi.localIP().toString().c_str());
   configTime(0, 0, "pool.ntp.org", "time.google.com");
@@ -586,6 +612,29 @@ void updateFallDetector(float normG) {
   }
 }
 
+// Poignet simule : s'ajoute aux valeurs des curseurs du MPU-6050.
+void applyWristMotion() {
+  if (!WRIST_SIM) return;
+  unsigned long now = millis();
+  bool upright = angleDeg(0, 0, 1, ax, ay, az) < 30;  // curseurs : debout ou assise
+  bool busy = fallState != FS_IDLE || preAlarm || fallScript != SCRIPT_OFF;
+  if (upright && !busy && now >= nextGestureAt) {
+    gestureUntil = now + GESTURE_MS;
+    nextGestureAt = now + (unsigned long)random(8000, 20000);
+  }
+  if (gestureActive() && upright && !busy) {
+    float env = sin(PI * (float)(gestureUntil - now) / GESTURE_MS);  // monte puis redescend
+    float w = 2 * PI * 1.5 * now / 1000.0;                            // bras qui balance a 1,5 Hz
+    ax += 0.30 * env * sin(w);
+    ay += 0.20 * env * cos(w);
+    az += 0.10 * env * sin(2 * w);
+  }
+  // Tremblement : ecart-type ~0,006 g, tres en dessous du seuil d'immobilite (0,05 g).
+  ax += random(-100, 101) / 10000.0;
+  ay += random(-100, 101) / 10000.0;
+  az += random(-100, 101) / 10000.0;
+}
+
 // Bouton CHUTE : remplace la lecture du MPU-6050 tant que le scenario tourne.
 void applyFallScript() {
   if (fallScript == SCRIPT_OFF) return;
@@ -615,6 +664,7 @@ void readFallButton() {
 void readImu() {
   if (!imuOk) return;
   mpuReadAccel();
+  applyWristMotion();
   applyFallScript();
   float normG = sqrt(ax * ax + ay * ay + az * az);
   float normMs2 = normG * G_TO_MS2;

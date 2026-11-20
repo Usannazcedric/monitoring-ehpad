@@ -21,6 +21,27 @@ def _received_at() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
+# Au-delà de cet écart avec l'horloge du serveur, l'heure du capteur n'est plus crue.
+CLOCK_DRIFT_MAX_S = 30.0
+
+
+def _storage_time(device_ts: str, received: str) -> str:
+    """Horodatage enregistré dans InfluxDB.
+
+    L'heure du capteur, sauf si elle s'écarte de plus de 30 s de celle du serveur :
+    une carte Wokwi dont l'onglet est passé en arrière-plan prend des minutes de
+    retard, et ses mesures tombaient hors du graphique des 15 dernières minutes.
+    """
+    try:
+        dev = datetime.fromisoformat(device_ts.replace("Z", "+00:00"))
+        rec = datetime.fromisoformat(received.replace("Z", "+00:00"))
+    except ValueError:
+        return received
+    if dev.tzinfo is None:
+        return received
+    return device_ts if abs((rec - dev).total_seconds()) <= CLOCK_DRIFT_MAX_S else received
+
+
 async def handle(family: str, key: str, raw: str | bytes, cache: RedisCache, influx: Any, publisher: Any | None = None) -> None:
     try:
         data = json.loads(raw)
@@ -40,8 +61,9 @@ async def handle(family: str, key: str, raw: str | bytes, cache: RedisCache, inf
 
 async def _handle_vitals(data: dict[str, Any], cache: RedisCache, influx: Any, publisher: Any | None) -> None:
     payload = VitalsPayload.model_validate(data)
+    received = _received_at()
     partial: dict[str, Any] = {
-        "last_seen": _received_at(),
+        "last_seen": received,
         "measured_at": payload.timestamp,
         "vitals": payload.values.model_dump(),
     }
@@ -50,7 +72,7 @@ async def _handle_vitals(data: dict[str, Any], cache: RedisCache, influx: Any, p
         partial["scenario"] = sc
     merged = await cache.merge_resident_state(payload.resident_id, partial)
     await cache.push_ml_window(payload.resident_id, payload.values.model_dump())
-    await influx.write_vitals(payload.resident_id, payload.timestamp, payload.values.model_dump())
+    await influx.write_vitals(payload.resident_id, _storage_time(payload.timestamp, received), payload.values.model_dump())
     if publisher is not None:
         try:
             publisher.publish(f"ehpad/state/resident/{payload.resident_id}",
@@ -62,8 +84,9 @@ async def _handle_vitals(data: dict[str, Any], cache: RedisCache, influx: Any, p
 
 async def _handle_motion(data: dict[str, Any], cache: RedisCache, influx: Any, publisher: Any | None) -> None:
     payload = MotionPayload.model_validate(data)
+    received = _received_at()
     partial: dict[str, Any] = {
-        "last_seen": _received_at(),
+        "last_seen": received,
         "measured_at": payload.timestamp,
         "motion": payload.values.model_dump(),
     }
@@ -71,7 +94,7 @@ async def _handle_motion(data: dict[str, Any], cache: RedisCache, influx: Any, p
     if isinstance(sc, str):
         partial["scenario"] = sc
     merged = await cache.merge_resident_state(payload.resident_id, partial)
-    await influx.write_motion(payload.resident_id, payload.timestamp, payload.values.model_dump())
+    await influx.write_motion(payload.resident_id, _storage_time(payload.timestamp, received), payload.values.model_dump())
     if publisher is not None:
         try:
             publisher.publish(f"ehpad/state/resident/{payload.resident_id}",

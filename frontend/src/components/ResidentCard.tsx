@@ -76,8 +76,12 @@ export function ResidentCard({ resident, level }: Props) {
 
         <div className="grid grid-cols-3 gap-2 border-t border-zinc-700 pt-3">
           <Vital label="Pouls" value={v?.hr} unit="bpm" tone={vitalTone(v?.hr, (x) => x > 100 || x < 55, (x) => x > 140 || x < 40)} />
-          <Vital label="Oxygène" value={v?.spo2} unit="%" tone={vitalTone(v?.spo2, (x) => x < 95, (x) => x < 88)} />
-          <Vital label="Temp." value={v?.temp} unit="°C" tone={vitalTone(v?.temp, (x) => x < 35.5 || x > 37.8, (x) => x < 35 || x > 38.5)} />
+          {!isBracelet && (
+            <>
+              <Vital label="Oxygène" value={v?.spo2} unit="%" tone={vitalTone(v?.spo2, (x) => x < 95, (x) => x < 88)} />
+              <Vital label="Temp." value={v?.temp} unit="°C" tone={vitalTone(v?.temp, (x) => x < 35.5 || x > 37.8, (x) => x < 35 || x > 38.5)} />
+            </>
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-2 text-[12px]">

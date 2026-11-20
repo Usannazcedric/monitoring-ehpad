@@ -3,7 +3,8 @@ import type { Alert, ResidentSnapshot, RoomSnapshot } from "@/lib/api";
 import { BRACELET_RESIDENT } from "@/lib/residents";
 
 function readPresentation(): boolean {
-  try { return localStorage.getItem("veilleur-presentation") === "1"; } catch { return false; }
+  // Actif par défaut : la démo ne montre que la chambre 121. Désactivable dans l'onglet Démo.
+  try { return localStorage.getItem("veilleur-presentation") !== "0"; } catch { return true; }
 }
 
 /** En mode présentation, seul le résident du bracelet est affiché. */

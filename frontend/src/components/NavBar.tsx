@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import { BellRing, LayoutDashboard, Map, Moon, Presentation, Sun, Users, Watch } from "lucide-react";
 import { useStore, isShown } from "@/store/store";
 
-const LINKS = [
+const LINKS: { to: string; label: string; icon: typeof LayoutDashboard; end: boolean; demo?: boolean }[] = [
   { to: "/", label: "Tableau de bord", icon: LayoutDashboard, end: true },
   { to: "/alerts", label: "Alertes", icon: BellRing, end: false },
-  { to: "/movements", label: "Plan & mouvements", icon: Map, end: false },
+  { to: "/movements", label: "Plan & mouvements", icon: Map, end: false, demo: false },
   { to: "/bracelet", label: "Bracelet", icon: Watch, end: false },
-  { to: "/personnel", label: "Personnel", icon: Users, end: false },
+  { to: "/personnel", label: "Personnel", icon: Users, end: false, demo: false },
   { to: "/demo", label: "Démo", icon: Presentation, end: false },
 ];
 
@@ -69,6 +69,9 @@ function ThemeButton() {
 export function NavBar() {
   const alertCount = useStore((s) => [...s.alerts.values()].filter((a) => isShown(a.resident_id, s.presentation)).length);
   const guards = useStore((s) => s.guards);
+  const presentation = useStore((s) => s.presentation);
+  // Mode présentation : seulement les pages utiles à la démo de la chambre 121.
+  const links = LINKS.filter((l) => !presentation || l.demo !== false);
   const now = useClock();
 
   const item = ({ isActive }: { isActive: boolean }) =>
@@ -90,7 +93,7 @@ export function NavBar() {
           </div>
         </div>
         <nav className="mt-6 flex flex-col gap-0.5">
-          {LINKS.map(({ to, label, icon: Icon, end }) => (
+          {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={item}>
               <Icon className="h-4 w-4 shrink-0" />
               <span className="flex-1">{label}</span>
@@ -124,7 +127,7 @@ export function NavBar() {
           <Status />
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-2.5 scrollbar-thin">
-          {LINKS.map(({ to, label, icon: Icon, end }) => (
+          {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={(s) => `${item(s)} whitespace-nowrap`}>
               <Icon className="h-4 w-4" />
               {label}

@@ -9,7 +9,7 @@ import { AckButton } from "@/components/AckButton";
 import { VitalChart } from "@/components/VitalChart";
 import { DailySchedule } from "@/components/DailySchedule";
 import { fmtRelative, LEVEL_LABELS, LEVEL_DESCRIPTIONS, ACTIVITY_LABELS, STATUS_BY_LEVEL, isFallActivity, reasonLabel } from "@/lib/format";
-import { residentInfo } from "@/lib/residents";
+import { residentInfo, BRACELET_RESIDENT } from "@/lib/residents";
 import { highestLevelFor } from "@/store/store";
 import { RoomStatus } from "@/components/RoomStatus";
 
@@ -85,6 +85,9 @@ export function ResidentDetail() {
   const status = STATUS_BY_LEVEL[level] ?? STATUS_BY_LEVEL[0];
   const activityLabel = m?.activity ? (ACTIVITY_LABELS[m.activity] ?? m.activity) : "—";
   const roomEntry = Array.from(rooms.values()).find((r) => r.resident_id === id);
+  // Chambre 121 (bracelet Wokwi) : seulement ce que mesure le bracelet. Le reste
+  // (oxygène, tension, IA, rapport, scénarios du simulateur) est hors de la finalité V1.
+  const isBracelet = id === BRACELET_RESIDENT;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-4">
@@ -103,10 +106,14 @@ export function ResidentDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <div className="font-semibold text-white">Constantes vitales actuelles</div>
-            <div className="text-xs text-zinc-500 mt-0.5">Passez la souris sur un indicateur pour voir les valeurs normales</div>
+            <div className="font-semibold text-white">{isBracelet ? "Ce que mesure le bracelet" : "Constantes vitales actuelles"}</div>
+            <div className="text-xs text-zinc-500 mt-0.5">
+              {isBracelet
+                ? "Pouls et position, mesurés au poignet. La chute est détectée par le bracelet lui-même."
+                : "Passez la souris sur un indicateur pour voir les valeurs normales"}
+            </div>
           </CardHeader>
-          <CardBody className="grid grid-cols-3 gap-4">
+          <CardBody className={`grid gap-4 ${isBracelet ? "grid-cols-2" : "grid-cols-3"}`}>
             <VitalGauge
               label="Rythme cardiaque"
               value={v?.hr}
@@ -115,6 +122,7 @@ export function ResidentDetail() {
               warn={(x) => x > 100 || x < 55}
               crit={(x) => x > 140 || x < 40}
             />
+            {!isBracelet && (<>
             <VitalGauge
               label="Saturation oxygène"
               value={v?.spo2}
@@ -143,13 +151,14 @@ export function ResidentDetail() {
               unit="mmHg"
               title="Pression artérielle diastolique"
             />
+            </>)}
             <div className="flex flex-col items-start">
-              <div className="text-[10px] uppercase tracking-wide text-zinc-400">Activité</div>
+              <div className="text-[10px] uppercase tracking-wide text-zinc-400">{isBracelet ? "Position" : "Activité"}</div>
               <div className={`text-sm font-semibold mt-1 ${isFallActivity(m?.activity) ? "text-red-400" : "text-white"}`}>
                 {activityLabel}
               </div>
             </div>
-            {typeof resident.risk === "number" && (
+            {!isBracelet && typeof resident.risk === "number" && (
               <div className="col-span-3">
                 <div className="text-[10px] uppercase tracking-wide text-zinc-400 mb-1">
                   Risque de malaise (prédit par IA)
@@ -217,7 +226,7 @@ export function ResidentDetail() {
         </Card>
       </div>
 
-      {roomEntry && (
+      {!isBracelet && roomEntry && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -238,14 +247,17 @@ export function ResidentDetail() {
 
       <Card>
         <CardHeader>
-          <div className="font-semibold text-white">Évolution des constantes — 15 dernières minutes</div>
-          <div className="text-xs text-zinc-500 mt-0.5">Rythme cardiaque (bpm), Saturation oxygène (%), Température (°C)</div>
+          <div className="font-semibold text-white">{isBracelet ? "Pouls" : "Évolution des constantes"} — 15 dernières minutes</div>
+          <div className="text-xs text-zinc-500 mt-0.5">
+            {isBracelet ? "Rythme cardiaque (bpm)" : "Rythme cardiaque (bpm), Saturation oxygène (%), Température (°C)"}
+          </div>
         </CardHeader>
         <CardBody>
-          <VitalChart rows={rows} fields={["hr", "spo2", "temp"]} />
+          <VitalChart rows={rows} fields={isBracelet ? ["hr"] : ["hr", "spo2", "temp"]} />
         </CardBody>
       </Card>
 
+      {!isBracelet && (<>
       <Card>
         <CardHeader>
           <div className="font-semibold text-white">Historique d'activité — 24 dernières heures</div>
@@ -314,6 +326,7 @@ export function ResidentDetail() {
           ))}
         </CardBody>
       </Card>
+      </>)}
     </div>
   );
 }

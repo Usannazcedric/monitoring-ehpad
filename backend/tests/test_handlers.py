@@ -63,3 +63,15 @@ async def test_unknown_family_is_ignored(cache, influx):
     await handle("ambient", "101", '{"timestamp":"x","values":{},"seq":1}', cache, influx)
     influx.write_vitals.assert_not_awaited()
     influx.write_motion.assert_not_awaited()
+
+
+def test_storage_time_keeps_device_clock_when_close():
+    from app.ingest.handlers import _storage_time
+    assert _storage_time("2026-11-20T10:00:05.000Z", "2026-11-20T10:00:00.000Z") == "2026-11-20T10:00:05.000Z"
+
+
+def test_storage_time_uses_server_clock_when_device_drifts():
+    # Carte Wokwi en arrière-plan : 16 min de retard, on garde l'heure de réception.
+    from app.ingest.handlers import _storage_time
+    assert _storage_time("2026-11-20T09:44:00.000Z", "2026-11-20T10:00:00.000Z") == "2026-11-20T10:00:00.000Z"
+    assert _storage_time("pas une date", "2026-11-20T10:00:00.000Z") == "2026-11-20T10:00:00.000Z"
