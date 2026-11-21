@@ -25,6 +25,9 @@ _tasks: list[asyncio.Task] = []
 
 async def vitals_loop(resident: Resident) -> None:
     while True:
+        if not api.is_active():
+            await asyncio.sleep(1.0)
+            continue
         now = datetime.now(timezone.utc)
         sc = getattr(resident, "_active_scenario", None)
         if sc is not None:
@@ -43,6 +46,9 @@ async def vitals_loop(resident: Resident) -> None:
 
 async def motion_loop(resident: Resident) -> None:
     while True:
+        if not api.is_active():
+            await asyncio.sleep(1.0)
+            continue
         now = datetime.now(timezone.utc)
         reading = resident.tick_motion(now)
         if _publisher is not None:
@@ -112,6 +118,9 @@ async def ambient_loop(resident: Resident) -> None:
     probs = _MOBILITY_PROBS.get(resident.profile.mobility, _MOBILITY_PROBS["autonomous"])
 
     while True:
+        if not api.is_active():
+            await asyncio.sleep(1.0)
+            continue
         now = datetime.now(timezone.utc)
         ts = now.isoformat(timespec="milliseconds").replace("+00:00", "Z")
         hour = now.hour + now.minute / 60.0
@@ -156,6 +165,9 @@ async def ambient_loop(resident: Resident) -> None:
 async def common_areas_loop() -> None:
     """Publish PIR for shared zones: salle commune and corridor."""
     while True:
+        if not api.is_active():
+            await asyncio.sleep(1.0)
+            continue
         now = datetime.now(timezone.utc)
         ts = now.isoformat(timespec="milliseconds").replace("+00:00", "Z")
         h = now.hour + now.minute / 60.0
@@ -194,9 +206,10 @@ async def on_startup() -> None:
     for p in profiles:
         _residents[p.id] = Resident.from_profile(p, seed=hash(p.id) & 0xFFFFFFFF)
         _residents[p.id].calm = settings.calm
-    api.init(_residents, settings.demo_mode)
     _publisher = Publisher(settings.mqtt_host, settings.mqtt_port)
     await _publisher.start()
+    api.init(_residents, settings.demo_mode, active=settings.active,
+             publish=lambda topic, payload: _publisher and _publisher.publish(topic, payload, qos=0))
     log.info("publisher_connected", host=settings.mqtt_host, port=settings.mqtt_port)
     for r in _residents.values():
         _tasks.append(asyncio.create_task(vitals_loop(r)))
@@ -204,7 +217,8 @@ async def on_startup() -> None:
         _tasks.append(asyncio.create_task(ambient_loop(r)))
         _tasks.append(asyncio.create_task(routine_loop(r)))
     _tasks.append(asyncio.create_task(common_areas_loop()))
-    log.info("simulator_ready", residents=len(_residents), demo_mode=settings.demo_mode, calm=settings.calm)
+    log.info("simulator_ready", residents=len(_residents), demo_mode=settings.demo_mode,
+             calm=settings.calm, active=settings.active)
 
 
 @app.on_event("shutdown")

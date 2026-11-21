@@ -49,3 +49,34 @@ def test_calm_mode_replaces_a_pathological_baseline():
     v = r.tick(datetime(2026, 11, 13, 3, 0, tzinfo=timezone.utc))["values"]
     assert 60 <= v["hr"] <= 85
     assert v["spo2"] >= 95
+
+
+def test_active_toggle_settles_residents_and_blocks_scenarios():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from app import api
+
+    r = Resident.from_profile(make_profile(), seed=1)
+    r.activity = "fall"
+    r.scenario = "fall"
+    sent: list[tuple[str, dict]] = []
+    api.init({"R999": r}, demo_mode=True, active=True, publish=lambda t, p: sent.append((t, p)))
+    app = FastAPI()
+    app.include_router(api.router)
+    client = TestClient(app)
+
+    assert client.get("/active").json() == {"on": True, "residents": 1}
+    assert client.post("/active", json={"on": False}).json()["on"] is False
+    assert api.is_active() is False
+    # Une derniere mesure saine, puis plus rien : le backend ne recree pas l'alerte.
+    assert r.calm is True and r.scenario == "normal" and r.activity != "fall"
+    topics = [t for t, _ in sent]
+    assert "ehpad/vitals/resident/R999" in topics
+    motion = dict(sent)["ehpad/motion/resident/R999"]
+    assert motion["values"]["activity"] != "fall"
+    assert dict(sent)["ehpad/door/room/999"]["values"]["value"] == 0
+    # Coupe : pas de scenario injecte
+    assert client.post("/scenario/R999", json={"name": "fall"}).status_code == 409
+
+    assert client.post("/active", json={"on": True}).json()["on"] is True
+    assert client.post("/scenario/R999", json={"name": "normal"}).status_code == 200

@@ -17,6 +17,24 @@ export function useBootstrap() {
   const setGuards = useStore((s) => s.setGuards);
   const pushToast = useToasts((s) => s.push);
 
+  // Les autres résidents sont-ils simulés ? Le simulateur fait foi, pour que le
+  // tableau de bord et l'onglet Démo, même dans deux fenêtres, disent la même chose.
+  useEffect(() => {
+    let cancelled = false;
+    const sync = () => {
+      const started = Date.now();
+      api.getOthers().then((r) => {
+        const st = useStore.getState();
+        if (cancelled || started < st.presentationChangedAt) return;
+        if (st.presentation === r.on) st.setPresentation(!r.on);
+        if (st.othersCount !== r.residents) st.setOthersCount(r.residents);
+      }).catch(() => { /* simulateur injoignable : on garde la dernière valeur */ });
+    };
+    sync();
+    const t = setInterval(sync, 5000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -34,6 +52,8 @@ export function useBootstrap() {
         if (Object.keys(guardMap).length > 0) setGuards(guardMap);
       } catch (err) {
         console.error("bootstrap_failed", err);
+      } finally {
+        if (!cancelled) useStore.getState().setBootstrapped();
       }
     })();
 

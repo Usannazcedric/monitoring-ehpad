@@ -3,11 +3,11 @@ import type { Alert, ResidentSnapshot, RoomSnapshot } from "@/lib/api";
 import { BRACELET_RESIDENT } from "@/lib/residents";
 
 function readPresentation(): boolean {
-  // Actif par défaut : la démo ne montre que la chambre 121. Désactivable dans l'onglet Démo.
+  // Valeur de départ seulement : useBootstrap la cale sur le simulateur (autres résidents coupés ou non).
   try { return localStorage.getItem("veilleur-presentation") !== "0"; } catch { return true; }
 }
 
-/** En mode présentation, seul le résident du bracelet est affiché. */
+/** Autres résidents coupés : seul le résident du bracelet est affiché. */
 export function isShown(residentId: string, presentation: boolean): boolean {
   return !presentation || residentId === BRACELET_RESIDENT;
 }
@@ -18,9 +18,17 @@ interface State {
   rooms: Map<string, RoomSnapshot>;
   guards: Record<string, string>;   // wing → staff name
   connected: boolean;
-  /** Mode présentation : n'afficher que le bracelet (chambre 121), pas les résidents simulés. */
+  /** Premier chargement terminé : avant, une grille vide veut dire « en cours », pas « rien ». */
+  bootstrapped: boolean;
+  setBootstrapped: () => void;
+  /** Autres résidents coupés : n'afficher que le bracelet (chambre 121). Suit l'état du simulateur. */
   presentation: boolean;
+  /** Date du dernier changement, pour ignorer une lecture du simulateur partie avant. */
+  presentationChangedAt: number;
   setPresentation: (on: boolean) => void;
+  /** Nombre de résidents fictifs du simulateur (19 dans docker-compose). */
+  othersCount: number;
+  setOthersCount: (n: number) => void;
   setResident: (snap: ResidentSnapshot) => void;
   setResidentBulk: (snaps: ResidentSnapshot[]) => void;
   upsertAlert: (a: Alert) => void;
@@ -39,11 +47,16 @@ export const useStore = create<State>((set) => ({
   rooms: new Map(),
   guards: { A: "Sophie Martin", B: "Marie Lambert" },
   connected: false,
+  bootstrapped: false,
+  setBootstrapped: () => set({ bootstrapped: true }),
   presentation: readPresentation(),
+  presentationChangedAt: 0,
   setPresentation: (on) => {
     try { localStorage.setItem("veilleur-presentation", on ? "1" : "0"); } catch { /* navigation privée */ }
-    set({ presentation: on });
+    set({ presentation: on, presentationChangedAt: Date.now() });
   },
+  othersCount: 19,
+  setOthersCount: (n) => set({ othersCount: n }),
   setResident: (snap) => set((s) => {
     const m = new Map(s.residents);
     const prev = m.get(snap.resident_id) ?? { resident_id: snap.resident_id };

@@ -65,8 +65,12 @@ services:
       MQTT_HOST: mosquitto
       MQTT_PORT: 1883
       API_PORT: 9100
-      RESIDENT_COUNT: 20
+      # 19 résidents fictifs (R001 à R019), plus Jeanne (R021, chambre 121) jouée par la carte Wokwi.
+      RESIDENT_COUNT: 19
       DEMO_MODE: "true"
+      # Démarre coupé : la démo commence sur la chambre 121 seule. Interrupteur
+      # « 19 autres résidents fictifs » dans l'onglet Démo.
+      SIM_ACTIVE: "false"
       # Démarre au calme : constantes saines, tableau vide. Désactivable dans l'onglet Démo
       # pour revoir les profils pathologiques du MBA 1 (tous les niveaux d'alerte).
       SIM_CALM: "true"

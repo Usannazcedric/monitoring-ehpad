@@ -11,6 +11,7 @@ class Settings:
     resident_count: int
     demo_mode: bool
     calm: bool
+    active: bool
     log_level: str
     profiles_path: str
 
@@ -23,6 +24,7 @@ class Settings:
             resident_count=int(os.getenv("RESIDENT_COUNT", "20")),
             demo_mode=os.getenv("DEMO_MODE", "false").lower() == "true",
             calm=os.getenv("SIM_CALM", "false").lower() == "true",
+            active=os.getenv("SIM_ACTIVE", "true").lower() == "true",
             log_level=os.getenv("LOG_LEVEL", "INFO"),
             profiles_path=os.getenv("PROFILES_PATH", "/app/profiles.json"),
         )

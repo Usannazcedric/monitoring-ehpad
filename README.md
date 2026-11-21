@@ -1,6 +1,6 @@
 # Projet 2 — Monitoring EHPAD (IoT / IA)
 
-Plateforme de surveillance temps réel de 20 résidents en EHPAD. Capteurs simulés (constantes vitales, mouvement, ambiance), ingestion MQTT, scoring ML hybride (anomaly + tendance), moteur d'alertes 5 niveaux avec auto-escalade, détection de fugue, résumé quotidien généré par LLM local, et tableau de bord React temps réel.
+Plateforme de surveillance temps réel de 20 résidents en EHPAD : 19 simulés, plus Jeanne (chambre 121), jouée par la carte ESP32 dans Wokwi. Capteurs simulés (constantes vitales, mouvement, ambiance), ingestion MQTT, scoring ML hybride (anomaly + tendance), moteur d'alertes 5 niveaux avec auto-escalade, détection de fugue, résumé quotidien généré par LLM local, et tableau de bord React temps réel.
 
 L'ensemble s'exécute via un seul `docker compose up -d --build`.
 
@@ -41,7 +41,11 @@ docker compose up -d --build
 
 Puis lancer la simulation Wokwi (voir [`firmware/m1_wokwi/`](firmware/m1_wokwi/)). La carte
 alimente le résident **R021, chambre 121**, hors de la plage du simulateur Python
-(R001–R020), pour que les deux sources ne se contredisent jamais sur un même résident.
+(R001–R019), pour que les deux sources ne se contredisent jamais sur un même résident.
+
+Les 19 résidents simulés démarrent **coupés** : la démo commence sur la chambre 121 seule.
+L'interrupteur « Les 19 autres résidents fictifs » de l'onglet **Démo** les active ou les coupe
+(coupés, ils ne publient plus rien et leurs alertes ouvertes sont clôturées).
 
 Ce qu'on voit alors sur http://localhost:3000 :
 
@@ -183,7 +187,7 @@ curl -X POST http://localhost:9100/scenario/R002 \
 
 | Variable | Service | Défaut | Rôle |
 | --- | --- | --- | --- |
-| `DEMO_MODE` | backend, simulator | `true` | Compresse les délais d'escalade (10 min → 60 s) |
+| `DEMO_MODE` | backend, simulator | `true` | Compresse les délais d'escalade : Attention → Alerte en 5 min au lieu de 10 |
 | `MQTT_HOST` | tous | `mosquitto` | Hôte MQTT |
 | `REDIS_URL` | backend | `redis://redis:6379` | URL Redis |
 | `INFLUX_URL` | backend | `http://influxdb:8086` | URL Influx |
@@ -191,7 +195,9 @@ curl -X POST http://localhost:9100/scenario/R002 \
 | `MODELS_DIR` | backend | `/models` | Persistance des modèles ML |
 | `OLLAMA_URL` | backend | `http://ollama:11434` | URL Ollama |
 | `OLLAMA_MODEL` | backend, ollama-init | `llama3.2:3b` | Modèle LLM utilisé |
-| `RESIDENT_COUNT` | simulator | `20` | Nombre de résidents |
+| `RESIDENT_COUNT` | simulator | `19` | Nombre de résidents simulés (R001 à R019) |
+| `SIM_ACTIVE` | simulator | `false` | Résidents simulés actifs au démarrage (interrupteur dans l'onglet Démo) |
+| `SIM_CALM` | simulator | `true` | Constantes saines au démarrage, au lieu des profils pathologiques du MBA 1 |
 
 ---
 

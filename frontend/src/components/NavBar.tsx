@@ -70,7 +70,7 @@ export function NavBar() {
   const alertCount = useStore((s) => [...s.alerts.values()].filter((a) => isShown(a.resident_id, s.presentation)).length);
   const guards = useStore((s) => s.guards);
   const presentation = useStore((s) => s.presentation);
-  // Mode présentation : seulement les pages utiles à la démo de la chambre 121.
+  // Autres résidents coupés : seulement les pages utiles à la démo de la chambre 121.
   const links = LINKS.filter((l) => !presentation || l.demo !== false);
   const now = useClock();
 

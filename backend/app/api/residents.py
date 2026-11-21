@@ -35,6 +35,16 @@ async def get_resident(resident_id: str):
     return {"resident_id": resident_id, **state}
 
 
+@router.delete("/{resident_id}/state")
+async def forget_resident(resident_id: str):
+    """Oublie l'etat en direct d'un resident fictif coupe (onglet Demo).
+
+    L'historique (InfluxDB) et les alertes ne sont pas touches.
+    """
+    cache: RedisCache = _state["cache"]  # type: ignore[assignment]
+    return {"resident_id": resident_id, "forgotten": await cache.forget_resident(resident_id)}
+
+
 @router.get("/{resident_id}/history")
 async def get_history(
     resident_id: str,

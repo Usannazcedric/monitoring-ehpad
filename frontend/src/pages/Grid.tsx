@@ -49,6 +49,7 @@ export function GridPage() {
   const residents = useStore((s) => s.residents);
   const alerts = useStore((s) => s.alerts);
   const presentation = useStore((s) => s.presentation);
+  const bootstrapped = useStore((s) => s.bootstrapped);
   const [filter, setFilter] = useState<Filter>("tous");
   const [query, setQuery] = useState("");
 
@@ -75,8 +76,12 @@ export function GridPage() {
   const priority = useMemo(
     () =>
       Array.from(alerts.values())
-        .filter((a) => a.status === "active" && a.level >= 4 && isShown(a.resident_id, presentation))
-        .sort((a, b) => b.level - a.level || a.created_at.localeCompare(b.created_at))
+        // Une urgence prise en charge reste ici jusqu'à « Résolu » : le compteur
+        // « Urgences en cours » la compte, le bandeau « aucune urgence » mentirait.
+        .filter((a) => a.status !== "resolved" && a.level >= 4 && isShown(a.resident_id, presentation))
+        .sort((a, b) =>
+          Number(a.status !== "active") - Number(b.status !== "active")
+          || b.level - a.level || a.created_at.localeCompare(b.created_at))
         .slice(0, 3),
     [alerts, presentation],
   );
@@ -90,11 +95,11 @@ export function GridPage() {
     return true;
   });
 
-  if (rows.length === 0 && presentation) {
+  if (rows.length === 0 && presentation && bootstrapped) {
     return (
       <div className="p-12 flex flex-col items-center gap-2 text-center text-zinc-500">
         <div className="text-[15px] font-medium text-zinc-200">Le bracelet de la chambre 121 n'envoie rien pour l'instant.</div>
-        <div className="text-[13px]">Lancez la carte dans Wokwi (▶), ou quittez le mode présentation dans l'onglet <Link to="/demo" className="underline">Démo</Link>.</div>
+        <div className="text-[13px]">Lancez la carte dans Wokwi (▶), ou activez les autres résidents fictifs dans l'onglet <Link to="/demo" className="underline">Démo</Link>.</div>
       </div>
     );
   }
@@ -120,7 +125,7 @@ export function GridPage() {
         </div>
         {presentation && (
           <Link to="/demo" className="rounded-md bg-zinc-800 px-2.5 py-1 text-[12px] font-medium text-zinc-300 ring-1 ring-zinc-700 hover:text-white">
-            Mode présentation : chambre 121 seulement
+            Chambre 121 seule : autres résidents coupés
           </Link>
         )}
       </header>

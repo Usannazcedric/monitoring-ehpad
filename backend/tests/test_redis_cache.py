@@ -33,3 +33,12 @@ async def test_set_state_uses_ttl(cache):
     await cache.set_resident_state("R001", {"hr": 70})
     ttl = await cache.client.ttl("state:resident:R001")
     assert 0 < ttl <= 60
+
+
+async def test_forget_resident_drops_live_state_only(cache):
+    await cache.set_resident_state("R001", {"x": 1})
+    await cache.set_resident_state("R021", {"x": 2})
+    assert await cache.forget_resident("R001") is True
+    assert await cache.get_resident_state("R001") is None
+    assert sorted(await cache.list_residents()) == ["R021"]
+    assert await cache.forget_resident("R001") is False

@@ -12,8 +12,8 @@ en 10 secondes.
 
 ## Avant d'enregistrer (5 minutes)
 
-1. Lancez `./demo.sh` : la stack démarre et le tableau de bord s'ouvre, en mode présentation
-   (chambre 121 seule).
+1. Lancez `./demo.sh` : la stack démarre et le tableau de bord s'ouvre sur la chambre 121 seule
+   (les 19 autres résidents fictifs démarrent coupés ; interrupteur dans l'onglet **Démo**).
 2. Dans Wokwi, lancez la simulation (▶) et attendez `MQTT : connexion … OK` dans le moniteur
    série. Gardez l'onglet Wokwi **visible** : masqué, il ralentit.
    Au démarrage, le moniteur doit afficher `Bracelet : porte`. S'il affiche `Bracelet : RETIRE`,

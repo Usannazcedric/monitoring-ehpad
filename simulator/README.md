@@ -25,7 +25,13 @@ Env vars (with defaults):
 | MQTT_PORT       | 1883       |
 | API_PORT        | 9100       |
 | RESIDENT_COUNT  | 20         |
+| SIM_ACTIVE      | true       |
+| SIM_CALM        | false      |
 | DEMO_MODE       | false      |
 | LOG_LEVEL       | INFO       |
+
+`docker-compose.yml` runs 19 residents, starting switched off (`SIM_ACTIVE=false`) and calm.
+`GET/POST /active` switches them on or off (Demo tab); switched off, each resident gets one last
+healthy reading, then nothing is published.
 
 `DEMO_MODE=true` compresses scenario timings (`degradation` 30 min → ~3 min).

@@ -73,7 +73,7 @@ async def lifespan(app: FastAPI):
     _engine_task = asyncio.create_task(_engine.loop(_cache, interval=1.0))
 
     def _bootstrap_all_models():
-        rids = list(PROFILES.keys())  # 20 résidents simulés + R021, la carte ESP32
+        rids = list(PROFILES.keys())  # profils R001 à R020 (19 simulés) + R021, la carte ESP32
         for rid in rids:
             train_model(rid, settings.models_dir, days=7, force=False)
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Copy, ExternalLink, RotateCcw, Timer } from "lucide-react";
+import { Check, Copy, ExternalLink, RotateCcw, Timer, Users } from "lucide-react";
 import { useStore } from "@/store/store";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
@@ -85,6 +85,21 @@ function StatusRow({ ok, label, detail }: { ok: boolean | null; label: string; d
   );
 }
 
+function Switch({ on, disabled, onClick, label }: { on: boolean; disabled?: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40 ${on ? "bg-zinc-100" : "bg-zinc-700"}`}
+    >
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-zinc-950 shadow transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
+    </button>
+  );
+}
+
 function CopyCommand({ cmd }: { cmd: string }) {
   const [done, setDone] = useState(false);
   return (
@@ -104,8 +119,9 @@ export function DemoPage() {
   const residents = useStore((s) => s.residents);
   const alerts = useStore((s) => s.alerts);
   const upsertAlert = useStore((s) => s.upsertAlert);
-  const presentation = useStore((s) => s.presentation);
   const setPresentation = useStore((s) => s.setPresentation);
+  const othersCount = useStore((s) => s.othersCount);
+  const setOthersCount = useStore((s) => s.setOthersCount);
   const [serverOk, setServerOk] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<Set<number>>(new Set());
@@ -113,12 +129,17 @@ export function DemoPage() {
   const [sent, setSent] = useState<string | null>(null);
   const [, setTick] = useState(0);
   const [calm, setCalm] = useState<boolean | null>(null);
+  // Les autres résidents fictifs : null = simulateur injoignable. Départ sur l'état
+  // déjà connu, pour que l'interrupteur soit cliquable dès l'ouverture de la page.
+  const [others, setOthers] = useState<boolean | null>(() => !useStore.getState().presentation);
+  const [othersBusy, setOthersBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const check = () => {
       api.health().then(() => !cancelled && setServerOk(true)).catch(() => !cancelled && setServerOk(false));
       api.getCalm().then((r) => !cancelled && setCalm(r.on)).catch(() => !cancelled && setCalm(null));
+      api.getOthers().then((r) => !cancelled && setOthers(r.on)).catch(() => !cancelled && setOthers(null));
     };
     check();
     const t = setInterval(() => { check(); setTick((x) => x + 1); }, 3000);
@@ -128,13 +149,57 @@ export function DemoPage() {
   const bracelet = residents.get(BRACELET_RESIDENT);
   const braceletAge = secondsSince(bracelet?.last_seen);
   const open = useMemo(() => [...alerts.values()].filter((a) => a.status !== "resolved"), [alerts]);
+  // R001 à R019 : la liste ne dépend pas des données reçues (vide tant qu'ils sont coupés).
   const simulated = useMemo(
-    () => [...residents.keys()].filter((id) => id !== BRACELET_RESIDENT).sort(),
-    [residents],
+    () => Array.from({ length: othersCount }, (_, i) => `R${String(i + 1).padStart(3, "0")}`),
+    [othersCount],
   );
+  const firstRoom = residentInfo(simulated[0] ?? "R001").room;
+  const lastRoom = residentInfo(simulated[simulated.length - 1] ?? "R001").room;
 
   const toggleCalm = async (on: boolean) => {
     try { setCalm((await api.setCalm(on)).on); } catch { setCalm(null); }
+  };
+
+  // Couper : le simulateur remet chacun au calme et publie une dernière mesure
+  // saine, puis se tait. On clôture ensuite leurs alertes, sans quoi elles
+  // continueraient de monter en cachette jusqu'au Danger vital.
+  const toggleOthers = async (on: boolean) => {
+    setOthersBusy(true);
+    try {
+      const r = await api.setOthers(on);
+      setOthers(r.on);
+      setOthersCount(r.residents);
+      setPresentation(!r.on);
+      if (r.on) {
+        // Restes d'une ancienne configuration (ex. R020 quand il y en avait 20) :
+        // le serveur les garderait affichés « muets » indéfiniment.
+        const expected = new Set(Array.from({ length: r.residents }, (_, i) => `R${String(i + 1).padStart(3, "0")}`));
+        const leftovers = (await api.listResidents()).map((x) => x.resident_id)
+          .filter((id) => id !== BRACELET_RESIDENT && !expected.has(id));
+        await Promise.all(leftovers.map((id) => api.forgetResident(id).catch(() => null)));
+        if (leftovers.length > 0) {
+          const ids = new Set(leftovers);
+          useStore.setState((st) => ({ residents: new Map([...st.residents].filter(([id]) => !ids.has(id))) }));
+        }
+      }
+      if (!r.on) {
+        await new Promise((res) => setTimeout(res, 1500)); // laisser le serveur lire la dernière mesure
+        // D'abord oublier leur état (le moteur ne les évalue plus), puis clôturer :
+        // dans l'autre ordre, une alerte pourrait se recréer entre les deux.
+        const known = (await api.listResidents()).map((x) => x.resident_id).filter((id) => id !== BRACELET_RESIDENT);
+        await Promise.all(known.map((id) => api.forgetResident(id).catch(() => null)));
+        const stale = (await api.listAlerts()).filter((a) => a.status !== "resolved" && a.resident_id !== BRACELET_RESIDENT);
+        for (const a of stale) {
+          try { upsertAlert(await api.resolveAlert(a.id)); } catch { /* déjà fermée */ }
+        }
+      }
+      api.getCalm().then((c) => setCalm(c.on)).catch(() => setCalm(null));
+    } catch {
+      setOthers(null);
+    } finally {
+      setOthersBusy(false);
+    }
   };
 
   // Sans mode calme, les résidents simulés renvoient leurs constantes anormales
@@ -156,6 +221,7 @@ export function DemoPage() {
   };
 
   const inject = async (name: string) => {
+    if (!others) return;
     try {
       await api.injectScenario(room, name);
       setSent(`${SCENARIOS.find((s) => s.name === name)?.label} envoyé à la chambre ${residentInfo(room).room}`);
@@ -200,8 +266,31 @@ export function DemoPage() {
           </div>
         </Panel>
 
-        <Panel title="2. Repartir d'un tableau propre">
+        <Panel title="2. Choisir ce qu'on montre, repartir d'un tableau propre">
           <div className="space-y-4 text-[13px]">
+            <div className="flex items-center justify-between gap-4 rounded-lg bg-zinc-800/60 px-3 py-3 ring-1 ring-zinc-700">
+              <div>
+                <div className="flex items-center gap-2 font-medium text-zinc-100">
+                  <Users className="h-4 w-4 text-zinc-400" />
+                  Les {othersCount} autres résidents fictifs
+                </div>
+                <div className="text-zinc-500">
+                  {others === null
+                    ? "simulateur injoignable"
+                    : othersBusy
+                      ? (others ? "Activation…" : "Arrêt et clôture de leurs alertes…")
+                      : others
+                        ? `Actifs : chambres ${firstRoom} à ${lastRoom} sur le tableau de bord, avec Jeanne (121).`
+                        : "Coupés : le tableau de bord ne montre que la chambre 121, le bracelet Wokwi."}
+                </div>
+              </div>
+              <Switch
+                on={!!others}
+                disabled={others === null || othersBusy}
+                onClick={() => toggleOthers(!others)}
+                label={`Activer les ${othersCount} autres résidents fictifs`}
+              />
+            </div>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="font-medium text-zinc-100">Clôturer toutes les alertes</div>
@@ -213,39 +302,21 @@ export function DemoPage() {
             </div>
             <label className="flex cursor-pointer items-center justify-between gap-4">
               <div>
-                <div className="font-medium text-zinc-100">Résidents simulés au calme</div>
+                <div className="font-medium text-zinc-100">Résidents fictifs au calme</div>
                 <div className="text-zinc-500">
-                  {calm === null ? "simulateur injoignable" : "Constantes saines : plus d'alerte qui se rouvre. Activé par « Tout clôturer »."}
+                  {calm === null
+                    ? "simulateur injoignable"
+                    : !others
+                      ? "Sans effet tant que les autres résidents sont coupés."
+                      : "Constantes saines : plus d'alerte qui se rouvre. Activé par « Tout clôturer »."}
                 </div>
               </div>
-              <button
-                role="switch"
-                aria-checked={!!calm}
-                disabled={calm === null}
-                onClick={() => toggleCalm(!calm)}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40 ${calm ? "bg-zinc-100" : "bg-zinc-700"}`}
-              >
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-zinc-950 shadow transition-all ${calm ? "left-[22px]" : "left-0.5"}`} />
-              </button>
-            </label>
-            <label className="flex cursor-pointer items-center justify-between gap-4">
-              <div>
-                <div className="font-medium text-zinc-100">Mode présentation</div>
-                <div className="text-zinc-500">N'afficher que la chambre 121, le bracelet Wokwi.</div>
-              </div>
-              <button
-                role="switch"
-                aria-checked={presentation}
-                onClick={() => setPresentation(!presentation)}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${presentation ? "bg-zinc-100" : "bg-zinc-700"}`}
-              >
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-zinc-950 shadow transition-all ${presentation ? "left-[22px]" : "left-0.5"}`} />
-              </button>
+              <Switch on={!!calm} disabled={calm === null || !others} onClick={() => toggleCalm(!calm)} label="Résidents fictifs au calme" />
             </label>
             <p className="rounded-lg bg-zinc-800 px-3 py-2.5 text-[12px] text-zinc-400">
-              Les 20 résidents simulés du MBA 1 ont des constantes de départ anormales, exprès, pour montrer tous les niveaux.
-              Sans le mode calme, leurs alertes reviennent dès la mesure suivante et montent seules en Danger vital en une
-              dizaine de minutes. Le mode calme leur donne des constantes saines ; le plan B (scénarios) marche toujours.
+              Les {othersCount} résidents fictifs viennent du MBA 1 : leurs profils ont des constantes anormales, exprès,
+              pour montrer tous les niveaux d'alerte. Au calme, ils ont des constantes saines ; sans le calme, leurs alertes
+              reviennent dès la mesure suivante. Les couper clôture leurs alertes ouvertes.
             </p>
           </div>
         </Panel>
@@ -305,20 +376,27 @@ export function DemoPage() {
 
         <Panel title="Plan B : simuler sans Wokwi">
           <p className="text-[13px] text-zinc-500">
-            Si Wokwi ne compile pas, on déclenche l'événement sur un résident simulé. Pensez à quitter le mode présentation pour le voir.
+            Si Wokwi ne compile pas, on déclenche l'événement sur un résident fictif.
           </p>
+          {others === false && (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-zinc-800 px-3 py-2.5 text-[13px] text-zinc-300">
+              Les autres résidents sont coupés.
+              <Button variant="secondary" disabled={othersBusy} onClick={() => toggleOthers(true)}>Les activer</Button>
+            </div>
+          )}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <select
               value={room}
               onChange={(e) => setRoom(e.target.value)}
-              className="rounded-lg bg-zinc-900 px-2.5 py-1.5 text-[13px] text-white ring-1 ring-zinc-700 focus:outline-none focus:ring-zinc-500"
+              disabled={!others}
+              className="rounded-lg bg-zinc-900 px-2.5 py-1.5 text-[13px] text-white ring-1 ring-zinc-700 focus:outline-none focus:ring-zinc-500 disabled:opacity-40"
             >
               {simulated.map((id) => (
                 <option key={id} value={id}>Chambre {residentInfo(id).room} · {residentInfo(id).name}</option>
               ))}
             </select>
             {SCENARIOS.map((s) => (
-              <Button key={s.name} variant={s.name === "normal" ? "ghost" : "secondary"} onClick={() => inject(s.name)}>
+              <Button key={s.name} variant={s.name === "normal" ? "ghost" : "secondary"} disabled={!others} onClick={() => inject(s.name)}>
                 {s.label}
               </Button>
             ))}

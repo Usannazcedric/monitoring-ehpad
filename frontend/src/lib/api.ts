@@ -93,6 +93,17 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     }),
+  /** Efface l'état en direct d'un résident sur le serveur (pas son historique). */
+  forgetResident: (id: string) =>
+    http<{ resident_id: string; forgotten: boolean }>(`${API_BASE}/residents/${id}/state`, { method: "DELETE" }),
+  /** Les résidents fictifs du simulateur (R001 à R019) : actifs ou coupés. */
+  getOthers: () => http<{ on: boolean; residents: number }>(`${SIM_BASE}/active`),
+  setOthers: (on: boolean) =>
+    http<{ on: boolean; residents: number }>(`${SIM_BASE}/active`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ on }),
+    }),
   getCalm: () => http<{ on: boolean }>(`${SIM_BASE}/calm`),
   setCalm: (on: boolean) =>
     http<{ on: boolean }>(`${SIM_BASE}/calm`, {

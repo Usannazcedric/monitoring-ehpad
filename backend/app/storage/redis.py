@@ -42,6 +42,16 @@ class RedisCache:
             ids.append(key.split(":", 2)[-1])
         return ids
 
+    async def forget_resident(self, resident_id: str) -> bool:
+        """Efface l'etat en direct d'un resident (pas son historique InfluxDB).
+
+        Sert quand le simulateur coupe ses residents : sans cela, le calcul du
+        risque (toutes les 30 s) garderait leur dernier etat en vie indefiniment.
+        """
+        n = await self.client.delete(RESIDENT_KEY.format(id=resident_id),
+                                     ML_WINDOW_KEY.format(id=resident_id))
+        return n > 0
+
     async def merge_resident_state(self, resident_id: str, partial: dict[str, Any]) -> dict[str, Any]:
         current = await self.get_resident_state(resident_id) or {}
         current.update(partial)
